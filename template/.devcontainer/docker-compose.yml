@@ -1,0 +1,8 @@
+version: '3'
+services:
+  devcontainer:
+    image: ghcr.io/home-assistant/devcontainer:stable
+    volumes:
+      - ..:/workspace:cached
+    working_dir: /workspace
+    command: sleep infinity

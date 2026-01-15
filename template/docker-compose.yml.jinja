@@ -1,0 +1,12 @@
+version: '3'
+services:
+  homeassistant:
+    image: ghcr.io/home-assistant/home-assistant:stable
+    volumes:
+      - ./config:/config
+      - ./custom_components/{{ component_slug }}:/config/custom_components/{{ component_slug }}
+    ports:
+      - "8123:8123"
+    restart: unless-stopped
+    environment:
+      - TZ=America/New_York

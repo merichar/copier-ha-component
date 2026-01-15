@@ -1,0 +1,485 @@
+# Development Guide for {{ component_name }}
+
+This guide covers everything you need to know to develop and test this Home Assistant custom component.
+
+## Table of Contents
+
+- [Environment Setup](#environment-setup)
+- [Project Structure](#project-structure)
+- [Running Tests](#running-tests)
+- [Manual Testing with Home Assistant](#manual-testing-with-home-assistant)
+- [Code Quality](#code-quality)
+- [Debugging](#debugging)
+- [Adding Features](#adding-features)
+- [Release Process](#release-process)
+
+## Environment Setup
+
+You have three options for setting up your development environment:
+
+### Option A: Devcontainer (Recommended)
+
+If you're using VS Code or a compatible IDE with devcontainer support:
+
+1. Install the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
+2. Open this project in VS Code
+3. Click "Reopen in Container" when prompted (or use Command Palette: "Dev Containers: Reopen in Container")
+4. Wait for the container to build and dependencies to install
+
+The devcontainer provides:
+- Home Assistant development environment
+- Python 3.12
+- All development dependencies pre-installed
+- Consistent environment across all developers
+
+### Option B: Docker without IDE Integration
+
+If you want the benefits of a containerized development environment without VS Code:
+
+1. **Start the development container**:
+   ```bash
+   docker compose -f .devcontainer/docker-compose.yml up -d
+   ```
+
+2. **Enter the container**:
+   ```bash
+   docker compose -f .devcontainer/docker-compose.yml exec devcontainer bash
+   ```
+
+3. **Install dependencies** (inside container):
+   ```bash
+   pip install -e .[dev]
+   ```
+
+4. **Run tests** (inside container):
+   ```bash
+   pytest
+   ```
+
+5. **Exit container**:
+   ```bash
+   exit
+   ```
+
+6. **Stop container when done**:
+   ```bash
+   docker compose -f .devcontainer/docker-compose.yml down
+   ```
+
+Note: This uses the development container image. For running a full Home Assistant instance to manually test your component, see [Manual Testing with Home Assistant](#manual-testing-with-home-assistant).
+
+### Option C: Manual Setup
+
+If you prefer to work directly on your host machine:
+
+1. **Install uv** (if not already installed):
+   ```bash
+   # macOS/Linux
+   curl -LsSf https://astral.sh/uv/install.sh | sh
+
+   # Windows
+   powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+   ```
+
+   *Note: pip users can substitute `uv pip` with `pip` in all commands.*
+
+2. **Create and activate virtual environment**:
+   ```bash
+   uv venv
+
+   # Activate (choose based on your OS/shell)
+   source .venv/bin/activate           # macOS/Linux (bash/zsh)
+   source .venv/bin/activate.fish      # macOS/Linux (fish)
+   .venv\Scripts\activate              # Windows (cmd)
+   .venv\Scripts\Activate.ps1          # Windows (PowerShell)
+   ```
+
+3. **Install dependencies**:
+   ```bash
+   uv pip install -e .[dev]
+   ```
+
+## Project Structure
+
+```
+{{ repo_name }}/
+├── custom_components/
+│   └── {{ component_slug }}/
+│       ├── __init__.py          # Component setup and entry points
+│       ├── manifest.json        # Component metadata and requirements
+{% if include_config_flow %}│       ├── config_flow.py       # UI configuration flow
+│       ├── strings.json         # Translations for config flow
+{% endif %}│       └── [platforms]/        # Entity platforms (sensor, switch, etc.)
+├── .devcontainer/
+│   ├── devcontainer.json       # VS Code devcontainer config
+│   └── docker-compose.yml      # Development container setup
+├── tests/
+│   └── test_init.py            # Unit and integration tests
+├── DEVELOPMENT.md              # Developer guide
+├── docker-compose.yml          # Run full HA instance for manual testing
+├── .editorconfig               # Editor-agnostic formatting rules
+├── .gitignore
+├── LICENSE                     # License for component
+├── pyproject.toml              # Python project configuration
+└── README.md                   # User-facing documentation
+```
+
+### Key Files
+
+**manifest.json**
+- Defines your component's metadata
+- Lists required dependencies and Home Assistant version
+- Specifies IoT class and integration type
+{% if iot_class == 'decide_later' %}
+- **TODO**: Update `iot_class` from `TODO_SET_IOT_CLASS` to the appropriate value
+{% endif %}
+
+**__init__.py**
+- Entry point for your component
+{% if include_config_flow %}- Sets up config entries and forwards to platforms
+{% else %}- Sets up component from YAML configuration
+{% endif %}- Handles component lifecycle (setup, unload)
+
+{% if include_config_flow %}**config_flow.py**
+- Handles UI-based configuration
+- Validates user input
+- Creates config entries
+
+**strings.json**
+- Provides translations for the config flow
+- Currently only English, but can be expanded
+{% endif %}
+
+**.devcontainer/**
+- Contains configuration for containerized development
+- `devcontainer.json`: VS Code devcontainer settings
+- `docker-compose.yml`: Development container orchestration
+
+**docker-compose.yml** (root)
+- Runs a full Home Assistant instance for manual integration testing
+- Automatically mounts your component as a custom component
+
+## Running Tests
+
+Tests use pytest with Home Assistant test fixtures.
+
+### Run all tests:
+```bash
+pytest
+```
+
+### Run specific test file:
+```bash
+pytest tests/test_init.py
+```
+
+### Run with coverage:
+```bash
+pytest --cov=custom_components.{{ component_slug }} --cov-report=html
+```
+Then open `htmlcov/index.html` in your browser.
+
+### Run with verbose output:
+```bash
+pytest -v
+```
+
+### Writing Tests
+
+Tests should cover:
+- Component setup and teardown
+{% if include_config_flow %}- Config flow validation
+- Config entry setup/unload
+{% endif %}- Entity state and attributes
+- Service calls
+- Error handling
+
+Example test structure:
+```python
+async def test_sensor_state(hass: HomeAssistant) -> None:
+    """Test sensor reports correct state."""
+    # Arrange: Set up component and entities
+    # Act: Trigger state update
+    # Assert: Verify correct behavior
+```
+
+## Manual Testing with Home Assistant
+
+For testing your component in a real Home Assistant instance:
+
+### Using Docker Compose
+
+1. **Start Home Assistant**:
+   ```bash
+   docker compose up -d
+   ```
+
+2. **Access Home Assistant**:
+   - Open http://localhost:8123
+   - Complete initial setup
+   - Your component is automatically available
+
+3. **View logs**:
+   ```bash
+   docker compose logs -f homeassistant
+   ```
+
+4. **Restart after code changes**:
+   ```bash
+   docker compose restart homeassistant
+   ```
+
+5. **Stop Home Assistant**:
+   ```bash
+   docker compose down
+   ```
+
+### Configuration
+
+Create `config/configuration.yaml` if it doesn't exist:
+
+{% if include_config_flow %}```yaml
+# Your component uses config flow - add it via UI:
+# Settings -> Devices & Services -> Add Integration -> "{{ component_name }}"
+```
+{% else %}```yaml
+{{ component_slug }}:
+  # Add your configuration here
+```
+{% endif %}
+
+### Manual Installation to Existing HA
+
+If you have an existing Home Assistant installation:
+
+1. Copy `custom_components/{{ component_slug }}` to your HA config directory:
+   ```
+   /config/custom_components/{{ component_slug }}/
+   ```
+
+2. Restart Home Assistant
+
+3. Check logs for any errors:
+   ```
+   Settings -> System -> Logs
+   ```
+
+## Code Quality
+
+### Linting and Formatting
+
+This project uses [Ruff](https://docs.astral.sh/ruff/) for linting and formatting.
+
+**Check for issues**:
+```bash
+ruff check .
+```
+
+**Auto-fix issues**:
+```bash
+ruff check --fix .
+```
+
+**Format code**:
+```bash
+ruff format .
+```
+
+**Check before committing**:
+```bash
+ruff check . && ruff format --check .
+```
+
+### Type Checking (Optional)
+
+For stricter type checking, you can add mypy:
+
+```bash
+uv pip install mypy
+# or with pip: pip install mypy
+mypy custom_components/{{ component_slug }}
+```
+
+## Debugging
+
+### Debug Logging
+
+Enable debug logging for your component in `configuration.yaml`:
+
+```yaml
+logger:
+  default: info
+  logs:
+    custom_components.{{ component_slug }}: debug
+```
+
+### IDE Debugging
+
+Most modern editors (VS Code, Emacs with dap-mode, Vim with vimspector) support Python debugging. Set breakpoints in your code and use your editor's Python debugger.
+
+For pytest debugging, run with the `-s` flag to see print statements:
+```bash
+pytest -s
+```
+
+Or use pytest's built-in debugging:
+```bash
+pytest --pdb  # Drop into debugger on failures
+```
+
+### Common Issues
+
+**Import errors**:
+- Ensure virtual environment is activated
+- Run `uv pip install -e .[dev]` again (or `pip install -e .[dev]`)
+
+**Tests fail with "No module named 'custom_components'**:
+- Make sure you're running pytest from project root
+- Ensure `__init__.py` exists in `custom_components/{{ component_slug }}/`
+
+**Component not loading in HA**:
+- Check `manifest.json` is valid JSON
+- Verify `domain` in manifest matches folder name
+- Check HA logs for specific errors
+
+## Adding Features
+
+### Adding a Platform (Sensor, Switch, etc.)
+
+1. **Create platform file**:
+   ```bash
+   touch custom_components/{{ component_slug }}/sensor.py
+   ```
+
+2. **Implement platform**:
+   ```python
+   """Sensor platform for {{ component_name }}."""
+   from homeassistant.components.sensor import SensorEntity
+   from homeassistant.core import HomeAssistant
+   from homeassistant.helpers.entity_platform import AddEntitiesCallback
+   from homeassistant.config_entries import ConfigEntry
+
+   async def async_setup_entry(
+       hass: HomeAssistant,
+       entry: ConfigEntry,
+       async_add_entities: AddEntitiesCallback,
+   ) -> None:
+       """Set up sensor platform."""
+       async_add_entities([MySensor()])
+
+   class MySensor(SensorEntity):
+       """Representation of a sensor."""
+
+       def __init__(self) -> None:
+           """Initialize the sensor."""
+           self._attr_name = "My Sensor"
+           self._attr_unique_id = "{{ component_slug }}_my_sensor"
+
+       @property
+       def native_value(self) -> str | None:
+           """Return the state of the sensor."""
+           return "example_value"
+   ```
+
+3. **Update __init__.py** to forward setup:
+   ```python
+   PLATFORMS = ["sensor"]  # Add your platforms here
+
+   async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+       """Set up from a config entry."""
+       await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+       return True
+   ```
+
+4. **Add tests**:
+   ```bash
+   touch tests/test_sensor.py
+   ```
+
+### Adding Dependencies
+
+**Python packages**:
+1. Add to `manifest.json` `requirements` list:
+   ```json
+   "requirements": ["aiohttp==3.9.0"]
+   ```
+
+2. Update dev dependencies in `pyproject.toml` if needed
+
+3. Reinstall:
+   ```bash
+   uv pip install -e .[dev]
+   # or with pip: pip install -e .[dev]
+   ```
+
+**Other HA integrations**:
+Add to `manifest.json` `dependencies` list:
+```json
+"dependencies": ["mqtt", "http"]
+```
+
+## Release Process
+
+### Version Bumping
+
+1. Update version in `manifest.json`
+2. Update version in `pyproject.toml`
+3. Update CHANGELOG.md (if you have one)
+
+### Creating a Release
+
+1. **Commit changes**:
+   ```bash
+   git add .
+   git commit -m "chore: bump version to X.Y.Z"
+   ```
+
+2. **Tag release**:
+   ```bash
+   git tag -a vX.Y.Z -m "Release version X.Y.Z"
+   ```
+
+3. **Push to {{ vcs_name }}**:
+   ```bash
+   git push origin main --tags
+   ```
+
+4. **Create Release**:
+   - Go to your repository on {{ vcs_name }}
+   - Create a new release from your tag
+   - Add release notes
+   - Publish release
+
+### HACS Compatibility
+
+To make your component compatible with HACS:
+
+1. Create `hacs.json`:
+   ```json
+   {
+     "name": "{{ component_name }}",
+     "render_readme": true
+   }
+   ```
+
+2. Ensure your repository has:
+   - Valid `manifest.json`
+   - README.md with installation instructions
+   - Semantic versioning tags (vX.Y.Z)
+
+3. Submit to HACS: https://hacs.xyz/docs/publish/start
+
+## Resources
+
+- [Home Assistant Developer Docs](https://developers.home-assistant.io/)
+- [Home Assistant Architecture](https://developers.home-assistant.io/docs/architecture_index)
+- [Integration Quality Scale](https://developers.home-assistant.io/docs/integration_quality_scale_index)
+- [pytest-homeassistant-custom-component](https://github.com/MatthewFlamm/pytest-homeassistant-custom-component)
+- [Ruff Documentation](https://docs.astral.sh/ruff/)
+- [uv Documentation](https://docs.astral.sh/uv/)
+
+## Getting Help
+
+- [Home Assistant Community Forum](https://community.home-assistant.io/)
+- [Home Assistant Discord](https://discord.gg/home-assistant)
+- Component repository: {{ vcs_uri_prefix }}{{ git_username }}/{{ repo_name }}/issues

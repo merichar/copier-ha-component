@@ -1,0 +1,11 @@
+{
+  "domain": "{{ component_slug }}",
+  "name": "{{ component_name }}",
+  "version": "0.1.0",
+  "documentation": "https://github.com/{{ github_username }}/{{ repo_name }}",
+  "issue_tracker": "https://github.com/{{ github_username }}/{{ repo_name }}/issues",
+  "codeowners": ["@{{ github_username }}"],
+  "requirements": [],
+  "dependencies": [],
+  "iot_class": "{% if iot_class == 'decide_later' %}TODO_SET_IOT_CLASS{% else %}{{ iot_class }}{% endif %}"
+}

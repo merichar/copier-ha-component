@@ -1,0 +1,41 @@
+"""Test {{ component_name }} component setup and initialization."""
+from homeassistant.core import HomeAssistant
+
+{% if include_config_flow %}
+from homeassistant.config_entries import ConfigEntry
+
+
+async def test_setup_entry(hass: HomeAssistant) -> None:
+    """Test setting up entry."""
+    entry = ConfigEntry(
+        version=1,
+        domain="{{ component_slug }}",
+        title="Test",
+        data={"name": "Test"},
+        source="test",
+    )
+
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+
+async def test_unload_entry(hass: HomeAssistant) -> None:
+    """Test unloading entry."""
+    entry = ConfigEntry(
+        version=1,
+        domain="{{ component_slug }}",
+        title="Test",
+        data={"name": "Test"},
+        source="test",
+    )
+
+    await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    assert await hass.config_entries.async_unload(entry.entry_id)
+{% else %}
+async def test_setup(hass: HomeAssistant) -> None:
+    """Test the component setup."""
+    # TODO: Add meaningful tests
+    assert True
+{% endif %}

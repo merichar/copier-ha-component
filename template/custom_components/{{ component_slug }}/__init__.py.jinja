@@ -1,0 +1,36 @@
+"""The {{ component_name }} integration."""
+
+from __future__ import annotations
+
+from homeassistant.core import HomeAssistant
+from homeassistant.config_entries import ConfigEntry
+
+{% if include_config_flow %}
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Set up {{ component_name }} from a config entry."""
+    # TODO: Set up your component
+    # Store any data needed for your platforms
+    # hass.data.setdefault(DOMAIN, {})[entry.entry_id] = {}
+
+    # Forward entry setup to platforms if needed
+    # await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+
+    return True
+
+
+async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Unload a config entry."""
+    # TODO: Unload platforms if they were set up
+    # unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+
+    # Remove data
+    # if unload_ok:
+    #     hass.data[DOMAIN].pop(entry.entry_id)
+
+    return True
+{% else %}
+async def async_setup(hass: HomeAssistant, config: dict) -> bool:
+    """Set up the {{ component_name }} component."""
+    # TODO: Set up your component from YAML configuration
+    return True
+{% endif %}

@@ -1,0 +1,77 @@
+# {{ component_name }}
+
+Home Assistant custom component for {{ component_name }}.
+
+## Installation
+
+### HACS (Recommended)
+
+1. Ensure [HACS](https://hacs.xyz/) is installed
+2. In Home Assistant, go to HACS -> Integrations
+3. Click the three dots menu -> Custom repositories
+4. Add this repository: `{{ vcs_uri_prefix }}{{ git_username }}/{{ repo_name }}`
+5. Category: Integration
+6. Click "Add"
+7. Find "{{ component_name }}" in HACS and install
+8. Restart Home Assistant
+
+### Manual Installation
+
+1. Download the latest release from [{{ vcs_name }}]({{ vcs_uri_prefix }}{{ git_username }}/{{ repo_name }}/releases)
+2. Extract the zip file
+3. Copy the `custom_components/{{ component_slug }}` directory to your Home Assistant `config/custom_components/` directory
+4. Restart Home Assistant
+
+## Configuration
+
+{% if include_config_flow %}
+### UI Configuration (Recommended)
+
+1. Go to Settings -> Devices & Services
+2. Click "+ Add Integration"
+3. Search for "{{ component_name }}"
+4. Follow the configuration steps
+
+### YAML Configuration
+
+Alternatively, add to your `configuration.yaml`:
+
+```yaml
+{{ component_slug }}:
+  # Configuration options will be documented here
+```
+
+Restart Home Assistant after making changes.
+{% else %}
+Add the following to your `configuration.yaml`:
+
+```yaml
+{{ component_slug }}:
+  # Add your configuration here
+  # Configuration options will be documented as features are added
+```
+
+Restart Home Assistant after making changes.
+{% endif %}
+
+## Features
+
+- Initial component setup
+- (Features will be documented as they are added)
+
+## Support
+
+- [Report an issue]({{ vcs_uri_prefix }}{{ git_username }}/{{ repo_name }}/issues)
+- [View documentation]({{ vcs_uri_prefix }}{{ git_username }}/{{ repo_name }})
+
+## Development
+
+Want to contribute? See [DEVELOPMENT.md](DEVELOPMENT.md) for development setup and guidelines.
+
+## License
+
+{% if include_mit_license %}
+This project is licensed under the MIT License: See the [LICENSE](LICENSE) file for details.
+{% else %}
+See the [LICENSE](LICENSE) file for details.
+{% endif %}
