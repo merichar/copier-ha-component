@@ -1,4 +1,4 @@
-# Template Development Guide
+# Copier Template Development Guide
 
 Guide for working on the copier-ha-component template itself.
 
@@ -63,6 +63,7 @@ copier-ha-component/
     │   └── test_init.py.jinja
     ├── DEVELOPMENT.md.jinja
     ├── docker-compose.yml.jinja
+    ├── hacs.json.jinja
     ├── LICENSE.jinja
     ├── pyproject.toml.jinja
     └── README.md.jinja
