@@ -94,6 +94,7 @@ your-component-name/
 ├── docker-compose.yml         # Full HA for testing
 ├── .editorconfig
 ├── .gitignore
+├── hacs.json                  # HACS integration config
 ├── LICENSE                    # (optional)
 ├── pyproject.toml             # Python config
 └── README.md                  # Component installation guide

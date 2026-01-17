@@ -4,22 +4,42 @@ Home Assistant custom component for {{ component_name }}.
 
 ## Installation
 
-### HACS (Recommended)
+Choose **ONE** of the following methods:
+
+### Option A: HACS Custom Repository
+
+Use this method for any component, whether or not it's in the HACS default repository.
 
 1. Ensure [HACS](https://hacs.xyz/) is installed
 2. In Home Assistant, go to HACS -> Integrations
-3. Click the three dots menu -> Custom repositories
+3. Click the three dots menu (top right) -> Custom repositories
 4. Add this repository: `{{ vcs_uri_prefix }}{{ git_username }}/{{ repo_name }}`
 5. Category: Integration
 6. Click "Add"
-7. Find "{{ component_name }}" in HACS and install
-8. Restart Home Assistant
+7. Click "{{ component_name }}" in the list
+8. Click "Download"
+9. Restart Home Assistant
 
-### Manual Installation
+### Option B: HACS Default Repository
+
+Once this component is accepted into the HACS default repository, you can install it directly:
+
+1. Ensure [HACS](https://hacs.xyz/) is installed
+2. In Home Assistant, go to HACS -> Integrations
+3. Click "+ Explore & Download Repositories"
+4. Search for "{{ component_name }}"
+5. Click "Download"
+6. Restart Home Assistant
+
+### Option C: Manual Installation
 
 1. Download the latest release from [{{ vcs_name }}]({{ vcs_uri_prefix }}{{ git_username }}/{{ repo_name }}/releases)
 2. Extract the zip file
-3. Copy the `custom_components/{{ component_slug }}` directory to your Home Assistant `config/custom_components/` directory
+3. Copy the `custom_components/{{ component_slug }}` directory to your Home Assistant's `custom_components` directory:
+   ```
+   <config>/custom_components/{{ component_slug }}/
+   ```
+   Where `<config>` is your Home Assistant configuration directory (the one with `configuration.yaml`)
 4. Restart Home Assistant
 
 ## Configuration
@@ -56,8 +76,7 @@ Restart Home Assistant after making changes.
 
 ## Features
 
-- Initial component setup
-- (Features will be documented as they are added)
+<!-- TODO: Update this section before first release -->
 
 ## Support
 
