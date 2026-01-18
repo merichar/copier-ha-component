@@ -207,7 +207,7 @@ _exclude:
 
 # Post-generation tasks
 _tasks:
-  - "git init"
+  - "git init -b"
   - "git add ."
   - 'git commit -m "feat: initial component from copier-ha-component template"'
   - "pre-commit install || echo 'Note: Run pre-commit install after installing dev dependencies'"
