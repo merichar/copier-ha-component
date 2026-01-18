@@ -89,19 +89,30 @@ your-component-name/
 │   └── your_slug/
 │       ├── __init__.py
 │       ├── manifest.json
-│       ├── config_flow.py      (optional)
-│       └── strings.json        (optional)
+│       ├── const.py
+│       ├── entity.py              # Base entity class
+│       ├── sensor.py              # Example sensor platform
+│       ├── coordinator.py         # Data fetching (polling integrations)
+│       ├── api.py                 # API/communication layer (if applicable)
+│       ├── config_flow.py         # UI configuration (optional)
+│       └── strings.json           # Translations (optional)
 ├── scripts/
 │   └── check_version.py
 ├── tests/
 │   └── test_init.py
 ├── docker-compose.yml
 ├── hacs.json
-├── LICENSE                     (optional)
+├── LICENSE                        # MIT license (optional)
 ├── pyproject.toml
 ├── README.md
 └── DEVELOPMENT.md
 ```
+
+**Architecture varies by integration type:**
+* **Polling integrations** (local_polling, cloud_polling): Include coordinator.py, api.py, entity.py
+* **Push integrations** (local_push, cloud_push): Include api.py, entity.py (no coordinator)
+* **Calculated integrations** (none): Include entity.py only
+* **Assumed state** (IR/RF devices): Include entity.py with assumed_state flag
 
 ## After Generation
 

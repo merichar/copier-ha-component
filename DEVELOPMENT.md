@@ -46,6 +46,8 @@ copier-ha-component/
 ├── DEVELOPMENT.md                  # This file
 ├── LICENSE                         # MIT license for template
 ├── README.md                       # User-facing documentation
+├── scripts/
+│   └── release.sh                  # Template release script
 └── template/                       # Files that get copied/templated
     ├── .devcontainer/
     │   ├── devcontainer.json.jinja
@@ -57,8 +59,15 @@ copier-ha-component/
     │   └── {{ component_slug }}/
     │       ├── __init__.py.jinja
     │       ├── manifest.json.jinja
-    │       ├── config_flow.py.jinja
-    │       └── strings.json.jinja
+    │       ├── const.py.jinja
+    │       ├── entity.py.jinja        # Base entity (all types)
+    │       ├── sensor.py.jinja        # Example platform
+    │       ├── coordinator.py.jinja   # Conditional: polling only
+    │       ├── api.py.jinja           # Conditional: all except 'none'
+    │       ├── config_flow.py.jinja   # Conditional: if enabled
+    │       └── strings.json.jinja     # Conditional: if config flow
+    ├── scripts/
+    │   └── check_version.py.jinja
     ├── tests/
     │   └── test_init.py.jinja
     ├── DEVELOPMENT.md.jinja

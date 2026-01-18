@@ -121,9 +121,14 @@ Work directly on your host machine without containers.
 │   └── {{ component_slug }}/
 │       ├── __init__.py          # Component setup and entry points
 │       ├── manifest.json        # Component metadata and requirements
-{% if include_config_flow %}│       ├── config_flow.py       # UI configuration flow
+│       ├── const.py             # Constants and configuration
+│       ├── entity.py            # Base entity class
+│       ├── sensor.py            # Example sensor platform
+{% if "polling" in integration_type %}│       ├── coordinator.py       # Data update coordinator
+{% endif %}{% if integration_type != "none" %}│       ├── api.py               # API/communication layer
+{% endif %}{% if include_config_flow %}│       ├── config_flow.py       # UI configuration flow
 │       ├── strings.json         # Translations for config flow
-{% endif %}│       └── [platforms]/        # Entity platforms (sensor, switch, etc.)
+{% endif %}│       └── [platforms]/        # Additional platforms (switch, binary_sensor, etc.)
 ├── scripts/
 │   └── check_version.py        # Version consistency checker
 ├── tests/
@@ -137,18 +142,52 @@ Work directly on your host machine without containers.
 ### Key Files
 
 **manifest.json**
-- Defines your component's metadata
+- Defines your component's metadata for Home Assistant
 - Lists required dependencies and minimum Home Assistant version
-- Specifies IoT class (how the component communicates with devices)
-{% if iot_class == 'decide_later' %}
-- **TODO**: Update `iot_class` from `TODO_SET_IOT_CLASS` to the appropriate value
-{% endif %}
+- Specifies IoT class: `{{ iot_class }}`
 
 **__init__.py**
 - Entry point for your component
 {% if include_config_flow %}- Sets up config entries and forwards to platforms
 {% else %}- Sets up component from YAML configuration
 {% endif %}- Handles component lifecycle (setup, unload)
+{% if "polling" in integration_type %}- Initializes the DataUpdateCoordinator
+{% endif %}
+
+**const.py**
+- Defines constants used throughout the component
+- Domain name, logger, default configuration values
+- Update intervals, timeouts, and other configurable settings
+
+**entity.py**
+- Base entity class for all platforms
+{% if "polling" in integration_type %}- Extends CoordinatorEntity for automatic updates
+{% else %}- Extends Entity for manual state management
+{% endif %}- Provides common device_info and unique_id logic
+{% if integration_type == "assumed_state" %}- Configured with assumed_state=True for one-way communication
+{% endif %}
+- Inherit from this class when creating new entity types
+
+{% if "polling" in integration_type %}**coordinator.py**
+- DataUpdateCoordinator manages periodic data fetching
+- Handles API calls and error recovery
+- **TODO**: Implement `_async_update_data()` with your API logic
+- Default update interval: 30 seconds (adjust in __init__)
+- All entities automatically update when coordinator fetches new data
+
+{% endif %}{% if integration_type != "none" %}**api.py**
+- Communication layer for external services/devices
+{% if "polling" in integration_type %}- Called by coordinator to fetch data
+{% elif "push" in integration_type %}- Handles incoming webhooks or websocket connections
+{% endif %}- **TODO**: Implement your API communication logic
+- Isolates network/device communication from Home Assistant logic
+
+{% endif %}**sensor.py**
+- Example sensor platform implementation
+{% if "polling" in integration_type %}- Uses coordinator data via CoordinatorEntity
+{% else %}- Manages its own state updates
+{% endif %}- Demonstrates proper entity class inheritance
+- **TODO**: Customize or add more sensor entities as needed
 
 {% if include_config_flow %}**config_flow.py**
 - Handles UI-based configuration flow
@@ -356,15 +395,23 @@ pytest --pdb  # Drop into debugger on failures
 
 ### Adding a Platform (Sensor, Switch, etc.)
 
-1. Create platform file: `custom_components/{{ component_slug }}/sensor.py`
+The template includes an example sensor platform. To add more platforms:
 
-2. Basic sensor example:
-```python
-"""Sensor platform for {{ component_name }}."""
-from homeassistant.components.sensor import SensorEntity
+1. **Create platform file**: `custom_components/{{ component_slug }}/switch.py`
+
+2. **Inherit from base entity class**:
+
+{% if "polling" in integration_type %}```python
+"""Switch platform for {{ component_name }}."""
+from __future__ import annotations
+
+from homeassistant.components.switch import SwitchEntity
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-{% if include_config_flow %}from homeassistant.config_entries import ConfigEntry
+from homeassistant.config_entries import ConfigEntry
+
+from .const import DOMAIN
+from .entity import {{ component_slug.title().replace('_', '') }}Entity
 
 
 async def async_setup_entry(
@@ -372,31 +419,149 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up {{ component_name }} sensor from a config entry."""
-    async_add_entities([ExampleSensor()])
-{% else %}
-
-def setup_platform(hass, config, add_entities, discovery_info=None):
-    """Set up the {{ component_name }} sensor platform."""
-    add_entities([ExampleSensor()])
-{% endif %}
+    """Set up switch platform."""
+    coordinator = hass.data[DOMAIN][entry.entry_id]
+    async_add_entities([{{ component_slug.title().replace('_', '') }}Switch(coordinator)])
 
 
-class ExampleSensor(SensorEntity):
-    """Example sensor."""
+class {{ component_slug.title().replace('_', '') }}Switch({{ component_slug.title().replace('_', '') }}Entity, SwitchEntity):
+    """{{ component_name }} Switch class."""
 
-    def __init__(self):
-        """Initialize the sensor."""
-        self._attr_name = "Example Sensor"
-        self._attr_unique_id = "{{ component_slug }}_example"
+    _attr_name = "Power"
 
     @property
-    def state(self):
-        """Return the state of the sensor."""
-        return "example_value"
+    def is_on(self) -> bool:
+        """Return true if switch is on."""
+        return self.coordinator.data.get("power_state") == "on"
+
+    async def async_turn_on(self, **kwargs) -> None:
+        """Turn the switch on."""
+        # TODO: Implement turn on logic
+        await self.coordinator.async_request_refresh()
+
+    async def async_turn_off(self, **kwargs) -> None:
+        """Turn the switch off."""
+        # TODO: Implement turn off logic
+        await self.coordinator.async_request_refresh()
 ```
+{% else %}```python
+"""Switch platform for {{ component_name }}."""
+from __future__ import annotations
+
+from homeassistant.components.switch import SwitchEntity
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.config_entries import ConfigEntry
+
+from .entity import {{ component_slug.title().replace('_', '') }}Entity
+
+
+async def async_setup_entry(
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
+    """Set up switch platform."""
+    async_add_entities([{{ component_slug.title().replace('_', '') }}Switch()])
+
+
+class {{ component_slug.title().replace('_', '') }}Switch({{ component_slug.title().replace('_', '') }}Entity, SwitchEntity):
+    """{{ component_name }} Switch class."""
+
+    _attr_name = "Power"
+
+    @property
+    def is_on(self) -> bool:
+        """Return true if switch is on."""
+        # TODO: Implement state tracking
+        return False
+
+    async def async_turn_on(self, **kwargs) -> None:
+        """Turn the switch on."""
+        # TODO: Implement turn on logic
+        pass
+
+    async def async_turn_off(self, **kwargs) -> None:
+        """Turn the switch off."""
+        # TODO: Implement turn off logic
+        pass
+```
+{% endif %}
 
 3. {% if include_config_flow %}Update `PLATFORMS` in `__init__.py`:
+```python
+PLATFORMS = ["sensor", "switch"]  # Add your platforms here
+```
+{% else %}Add to `configuration.yaml`:
+```yaml
+switch:
+  - platform: {{ component_slug }}
+```
+{% endif %}
+
+4. Write tests in `tests/test_switch.py`
+
+### Working with the Coordinator
+
+{% if "polling" in integration_type %}Your component uses a DataUpdateCoordinator for efficient data fetching:
+
+**Customize update interval** in `coordinator.py`:
+```python
+super().__init__(
+    hass,
+    LOGGER,
+    name=DOMAIN,
+    update_interval=timedelta(minutes=5),  # Adjust as needed
+)
+```
+
+**Implement data fetching** in `coordinator.py`:
+```python
+async def _async_update_data(self):
+    """Fetch data from API."""
+    try:
+        # TODO: Replace with your API call
+        async with async_timeout.timeout(10):
+            data = await self.api.fetch_data()
+        return data
+    except Exception as exception:
+        raise UpdateFailed(f"Error communicating with API: {exception}") from exception
+```
+
+**Access coordinator data** in entities:
+```python
+@property
+def native_value(self):
+    """Return sensor value."""
+    return self.coordinator.data.get("temperature")
+```
+
+**Manually trigger refresh**:
+```python
+await self.coordinator.async_request_refresh()
+```
+
+{% elif integration_type != "none" %}Your component communicates directly without a coordinator.
+
+**Implement communication** in `api.py`:
+```python
+async def send_command(self, command: str) -> bool:
+    """Send command to device."""
+    # TODO: Implement your communication logic
+    pass
+```
+
+**Update entity state** manually:
+```python
+async def async_turn_on(self, **kwargs):
+    """Turn on the device."""
+    success = await self.api.send_command("power_on")
+    if success:
+        self._attr_is_on = True
+        self.async_write_ha_state()
+```
+
+{% endif %}
 ```python
 PLATFORMS = ["sensor"]  # Add your platforms here
 ```
