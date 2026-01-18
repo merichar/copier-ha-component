@@ -48,6 +48,9 @@ copier-ha-component/
 ├── README.md                       # User-facing documentation
 ├── scripts/
 │   └── release.sh                  # Template release script
+├── tests/
+│   └── copier/
+│       └── default-answers.yml     # Test answers for pre-commit validation
 └── template/                       # Files that get copied/templated
     ├── .devcontainer/
     │   ├── devcontainer.json.jinja

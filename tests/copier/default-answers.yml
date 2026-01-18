@@ -1,0 +1,10 @@
+# Default test answers for copier template validation
+# Tests: local_polling integration with config flow
+
+component_name: "Test Component"
+author_name: "Test Author"
+author_email: "test@example.com"
+using_github: true
+include_config_flow: true
+integration_type: "local_polling"
+include_mit_license: true
