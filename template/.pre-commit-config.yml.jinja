@@ -27,3 +27,13 @@ repos:
     hooks:
       - id: codespell
         args: [--ignore-words-list=hass]
+
+  - repo: local
+    hooks:
+      - id: check-manifest-version
+        name: Check manifest.json version
+        entry: python scripts/check_version.py
+        language: python
+        files: custom_components/{{ component_slug }}/manifest.json
+        pass_filenames: false
+        always_run: true
