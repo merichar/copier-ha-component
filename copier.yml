@@ -201,14 +201,14 @@ include_mit_license:
 # Conditional file exclusion
 _exclude:
   # Exclude Coordinator for non-polling types
-  - "{% if integration_type in ['none', 'assumed_state', 'local_push', 'cloud_push'] %}custom_components/{{ component_slug }}/coordinator.py.jinja{% endif %}"
+  - "{% if integration_type in ['none', 'assumed_state', 'local_push', 'cloud_push'] %}custom_components/{{ component_slug }}/coordinator.py{% endif %}"
 
-  # Exclude API only for 'none' (Calculated integrations don't need external comms)
-  - "{% if integration_type == 'none' %}custom_components/{{ component_slug }}/api.py.jinja{% endif %}"
+  # Exclude API only for 'none'
+  - "{% if integration_type == 'none' %}custom_components/{{ component_slug }}/api.py{% endif %}"
 
   # Config Flow exclusions
-  - "{% if not include_config_flow %}custom_components/{{ component_slug }}/config_flow.py.jinja{% endif %}"
-  - "{% if not include_config_flow %}custom_components/{{ component_slug }}/strings.json.jinja{% endif %}"
+  - "{% if not include_config_flow %}custom_components/{{ component_slug }}/config_flow.py{% endif %}"
+  - "{% if not include_config_flow %}custom_components/{{ component_slug }}/strings.json{% endif %}"
 
 # Post-generation tasks
 _tasks:
@@ -250,7 +250,7 @@ _message_after_copy: |
 
     4. Run tests:
        pytest
+  {%- if not include_mit_license %}
 
-  {% if not include_mit_license %}
   Note: Don't forget to add a LICENSE file! Visit https://choosealicense.com/ for guidance.
-  {% endif %}
+  {%- endif %}

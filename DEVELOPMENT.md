@@ -122,23 +122,44 @@ Variables from `copier.yml` are available in templates:
 
 ### Local Testing
 
-1. **Generate a test component**:
-   ```bash
-   copier copy --trust . ../test-component
-   ```
+**Important: Force local template use**
 
-   Note: The `--trust` flag is needed because the template uses tasks for git initialization and helpful output messages.
+By default, copier may use the latest git tag instead of your current changes. Always use `--vcs-ref HEAD` to ensure it uses your local working directory:
+```bash
+# Clear cache to ensure fresh generation
+rm -rf ~/.cache/copier
 
-2. **Answer prompts**
+# Generate using current local state (uncommitted, unpushed, untagged changes)
+copier copy --trust --vcs-ref HEAD . ../test-component
+```
 
-3. **Verify generated files**:
-   ```bash
-   cd ../test-component
-   ls -la
-   cat custom_components/*/manifest.json
-   ```
+**Non-interactive testing:**
+```bash
+# Use defaults for all questions
+copier copy --trust --defaults --vcs-ref HEAD . ../test-component
 
-4. **Test the generated component**:
+# Or provide specific answers
+copier copy --trust --defaults --vcs-ref HEAD \
+  --data component_name="Test Component" \
+  --data integration_type="none" \
+  . ../test-component
+```
+
+**Using test answers file:**
+```bash
+copier copy --trust --defaults --vcs-ref HEAD \
+  --data-file tests/copier/default-answers.yml \
+  . ../test-component
+```
+
+**Important flags:**
+* `--trust` - Required because template uses tasks for git initialization
+* `--vcs-ref HEAD` - Use current local state, not latest tag/remote
+* `--defaults` - Non-interactive mode, uses default values
+
+
+
+**Test the generated component:**
    ```bash
    uv venv
    source .venv/bin/activate
@@ -146,35 +167,11 @@ Variables from `copier.yml` are available in templates:
    pytest
    ```
 
-5. **Check for untemplated variables**:
+**Check for untemplated variables:**
    ```bash
    grep -r "{{" . && echo "ERROR: Found untemplated variables!" || echo "OK"
    ```
 
-### Validation Script
-
-```bash
-# Test multiple scenarios
-for scenario in basic config-flow no-config decide-later; do
-  echo "Testing scenario: $scenario"
-  copier copy --trust . ../test-$scenario
-  cd ../test-$scenario
-
-  # Check for issues
-  grep -r "{{" . && echo "ERROR: Untemplated variables in $scenario!" || echo "OK"
-
-  # Test installation and tests
-  uv venv
-  source .venv/bin/activate
-  uv pip install -e .[dev]
-  pytest
-
-  cd -
-done
-
-# Cleanup
-rm -rf ../test-*
-```
 ### Running Pre-commit
 
 **Automatically on commit** (if installed):
@@ -228,10 +225,11 @@ git commit --no-verify
 
 1. Create in `template/` directory
 2. Add `.jinja` suffix if it needs templating
-3. Add to `_exclude` in `copier.yml` if conditional:
+3. Add to `_exclude` in `copier.yml` (without `.jinja` suffix) if it's only
+   generated conditionally:
    ```yaml
    _exclude:
-     - "{% if not some_condition %}path/to/file.jinja{% endif %}"
+     - "{% if some_condition %}path/to/file{% endif %}"
    ```
 
 ### Updating Documentation
