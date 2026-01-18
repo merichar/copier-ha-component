@@ -79,25 +79,28 @@ You'll be asked:
 
 ```
 your-component-name/
-├── .devcontainer/             # Container config
+├── .devcontainer/
 │   ├── devcontainer.json
 │   └── docker-compose.yml
-├── custom_components/         # Your HA component
+├── .editorconfig
+├── .gitignore
+├── .pre-commit-config.yml
+├── custom_components/
 │   └── your_slug/
 │       ├── __init__.py
 │       ├── manifest.json
-│       ├── config_flow.py     # (optional)
-│       └── strings.json       # (optional)
-├── tests/                     # pytest tests
+│       ├── config_flow.py      (optional)
+│       └── strings.json        (optional)
+├── scripts/
+│   └── check_version.py
+├── tests/
 │   └── test_init.py
-├── DEVELOPMENT.md             # Developer guide
-├── docker-compose.yml         # Full HA for testing
-├── .editorconfig
-├── .gitignore
-├── hacs.json                  # HACS integration config
-├── LICENSE                    # (optional)
-├── pyproject.toml             # Python config
-└── README.md                  # Component installation guide
+├── docker-compose.yml
+├── hacs.json
+├── LICENSE                     (optional)
+├── pyproject.toml
+├── README.md
+└── DEVELOPMENT.md
 ```
 
 ## After Generation

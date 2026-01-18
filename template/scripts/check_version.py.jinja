@@ -1,0 +1,90 @@
+#!/usr/bin/env python3
+"""Check if manifest.json version matches latest git tag.
+
+This pre-commit hook validates version consistency between the manifest
+and git tags. It warns when they don't match but never blocks commits.
+"""
+from __future__ import annotations
+
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+
+def get_manifest_version(manifest_path: Path) -> str | None:
+    """Extract version from manifest.json.
+    
+    Args:
+        manifest_path: Path to manifest.json file
+        
+    Returns:
+        Version string or None if file doesn't exist or is invalid
+    """
+    try:
+        with open(manifest_path, encoding="utf-8") as f:
+            manifest = json.load(f)
+        return manifest.get("version")
+    except (FileNotFoundError, json.JSONDecodeError, KeyError):
+        return None
+
+
+def get_latest_tag() -> str | None:
+    """Get the latest git tag.
+    
+    Returns:
+        Tag string (without 'v' prefix) or None if no tags exist
+    """
+    try:
+        result = subprocess.run(
+            ["git", "describe", "--tags", "--abbrev=0"],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=5,
+        )
+        if result.returncode != 0:
+            return None
+        
+        tag = result.stdout.strip()
+        # Remove 'v' prefix if present
+        return tag.lstrip("v") if tag else None
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        return None
+
+
+def main() -> int:
+    """Check version consistency between manifest and git tags.
+    
+    Returns:
+        Always returns 0 (warning only, never blocks commits)
+    """
+    manifest_path = Path("custom_components") / "{{ component_slug }}" / "manifest.json"
+    
+    # Get manifest version
+    manifest_version = get_manifest_version(manifest_path)
+    if manifest_version is None:
+        # Manifest doesn't exist or is invalid, skip check
+        return 0
+    
+    # Get latest git tag
+    latest_tag = get_latest_tag()
+    if latest_tag is None:
+        # No tags yet, just show manifest version
+        print(f"Manifest version: {manifest_version} (no git tags yet)")
+        return 0
+    
+    # Compare versions
+    if manifest_version != latest_tag:
+        print(f"WARNING: Version mismatch detected")
+        print(f"  Manifest version: {manifest_version}")
+        print(f"  Latest git tag:   v{latest_tag}")
+        print(f"  Update manifest.json before creating next release")
+    else:
+        print(f"Version check: {manifest_version} matches tag v{latest_tag}")
+    
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

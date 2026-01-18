@@ -124,12 +124,14 @@ Work directly on your host machine without containers.
 {% if include_config_flow %}│       ├── config_flow.py       # UI configuration flow
 │       ├── strings.json         # Translations for config flow
 {% endif %}│       └── [platforms]/        # Entity platforms (sensor, switch, etc.)
+├── scripts/
+│   └── check_version.py        # Version consistency checker
+├── tests/
+│   └── test_init.py            # Unit and integration tests
 ├── docker-compose.yml          # Run full HA instance for manual testing
 ├── hacs.json                   # HACS integration metadata
 ├── pyproject.toml              # Python project configuration
-├── README.md                   # User-facing documentation
-└── tests/
-    └── test_init.py            # Unit and integration tests
+└── README.md                   # User-facing documentation
 ```
 
 ### Key Files
@@ -292,6 +294,7 @@ Pre-commit hooks automatically check your code before each commit.
 - **Ruff**: Linting and formatting
 - **File validation**: Trailing whitespace, end-of-file newlines, YAML/JSON syntax
 - **Codespell**: Common spelling mistakes
+- **Version check**: Warns if `manifest.json` version doesn't match latest git tag
 
 **Install hooks** (if not already done during setup):
 ```bash
