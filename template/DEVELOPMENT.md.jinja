@@ -112,11 +112,11 @@ Work directly on your host machine without containers.
 ```
 {{ repo_name }}/
 ├── .devcontainer/
-│   ├── devcontainer.json       # VS Code devcontainer config
-│   └── docker-compose.yml      # Development container setup
-├── .editorconfig               # Editor-agnostic formatting rules
+│   ├── devcontainer.json        # VS Code devcontainer config
+│   └── docker-compose.yml       # Development container setup
+├── .editorconfig                # Editor-agnostic formatting rules
 ├── .gitignore
-├── .pre-commit-config.yml      # Pre-commit hooks configuration
+├── .pre-commit-config.yaml      # Pre-commit hooks configuration
 ├── custom_components/
 │   └── {{ component_slug }}/
 │       ├── __init__.py          # Component setup and entry points
@@ -130,13 +130,13 @@ Work directly on your host machine without containers.
 │       ├── strings.json         # Translations for config flow
 {% endif %}│       └── [platforms]/        # Additional platforms (switch, binary_sensor, etc.)
 ├── scripts/
-│   └── check_version.py        # Version consistency checker
+│   └── check_version.py         # Version consistency checker
 ├── tests/
-│   └── test_init.py            # Unit and integration tests
-├── docker-compose.yml          # Run full HA instance for manual testing
-├── hacs.json                   # HACS integration metadata
-├── pyproject.toml              # Python project configuration
-└── README.md                   # User-facing documentation
+│   └── test_init.py             # Unit and integration tests
+├── docker-compose.yml           # Run full HA instance for manual testing
+├── hacs.json                    # HACS integration metadata
+├── pyproject.toml               # Python project configuration
+└── README.md                    # User-facing documentation
 ```
 
 ### Key Files

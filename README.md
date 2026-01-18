@@ -84,7 +84,7 @@ your-component-name/
 │   └── docker-compose.yml
 ├── .editorconfig
 ├── .gitignore
-├── .pre-commit-config.yml
+├── .pre-commit-config.yaml
 ├── custom_components/
 │   └── your_slug/
 │       ├── __init__.py
