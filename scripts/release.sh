@@ -46,18 +46,18 @@ version_gt() {
     # Split versions into arrays
     IFS='.' read -ra V1 <<< "$1"
     IFS='.' read -ra V2 <<< "$2"
-    
+
     # Compare major
     if [ "${V1[0]}" -gt "${V2[0]}" ]; then return 0; fi
     if [ "${V1[0]}" -lt "${V2[0]}" ]; then return 1; fi
-    
+
     # Compare minor
     if [ "${V1[1]}" -gt "${V2[1]}" ]; then return 0; fi
     if [ "${V1[1]}" -lt "${V2[1]}" ]; then return 1; fi
-    
+
     # Compare patch
     if [ "${V1[2]}" -gt "${V2[2]}" ]; then return 0; fi
-    
+
     return 1
 }
 

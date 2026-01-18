@@ -307,6 +307,25 @@ async def async_setup(...):
 
 ## Release Process
 
+### Option A: Using Release Script (Recommended)
+
+The `scripts/release.sh` script automates version validation and tagging:
+
+```bash
+./scripts/release.sh 1.2.3
+```
+
+The script will:
+* Validate semantic versioning format
+* Check for uncommitted changes
+* Verify new version is greater than latest tag
+* Create annotated tag
+* Prompt to push to remote
+
+When the script is run without arguments, it returns the current tag.
+
+### Option B: Manual Release
+
 1. **Run full validation**:
    ```bash
    pre-commit run --all-files
