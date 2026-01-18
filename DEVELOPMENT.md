@@ -41,20 +41,23 @@ Guide for working on the copier-ha-component template itself.
 
 ```
 copier-ha-component/
-├── .pre-commit-config.yml          # Pre-commit hooks for template repo
+├── .pre-commit-config.yaml         # Pre-commit hooks for template repo
 ├── copier.yml                      # Template configuration and questions
 ├── DEVELOPMENT.md                  # This file
 ├── LICENSE                         # MIT license for template
 ├── README.md                       # User-facing documentation
 ├── scripts/
 │   └── release.sh                  # Template release script
+├── tests/
+│   └── copier/
+│       └── default-answers.yml     # Test answers for pre-commit validation
 └── template/                       # Files that get copied/templated
     ├── .devcontainer/
     │   ├── devcontainer.json.jinja
     │   └── docker-compose.yml
     ├── .editorconfig
     ├── .gitignore
-    ├── .pre-commit-config.yml.jinja
+    ├── .pre-commit-config.yaml.jinja
     ├── custom_components/
     │   └── {{ component_slug }}/
     │       ├── __init__.py.jinja

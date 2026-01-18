@@ -29,7 +29,7 @@ repos:
     hooks:
       - id: test-copier-generation
         name: Test copier template generation
-        entry: bash -c 'copier copy --trust --defaults . /tmp/copier-test-$$ && rm -rf /tmp/copier-test-$$'
+        entry: bash -c 'copier copy --trust --defaults --data-file tests/copier/default-answers.yml . /tmp/copier-test-$$ && rm -rf /tmp/copier-test-$$'
         language: system
         pass_filenames: false
         always_run: true
