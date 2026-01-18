@@ -1,0 +1,28 @@
+"""DataUpdateCoordinator for {{ component_name }}."""
+from __future__ import annotations
+
+from datetime import timedelta
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+
+from .const import DOMAIN, LOGGER
+
+class {{ component_slug.title().replace('_', '') }}DataUpdateCoordinator(DataUpdateCoordinator):
+    """Class to manage fetching data from the API."""
+
+    def __init__(self, hass: HomeAssistant) -> None:
+        """Initialize."""
+        super().__init__(
+            hass,
+            LOGGER,
+            name=DOMAIN,
+            update_interval=timedelta(seconds=30),
+        )
+
+    async def _async_update_data(self):
+        """Update data via library."""
+        try:
+            # TODO: Implement your API call here
+            return {"state": "online"}
+        except Exception as exception:
+            raise UpdateFailed(f"Error communicating with API: {exception}") from exception

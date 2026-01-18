@@ -1,0 +1,28 @@
+"""Sensor platform for {{ component_name }}."""
+from __future__ import annotations
+
+from homeassistant.components.sensor import SensorEntity
+from .entity import {{ component_slug.title().replace('_', '') }}Entity
+
+async def async_setup_entry(hass, entry, async_add_entities):
+    """Set up the sensor platform."""
+    {% if "polling" in integration_type -%}
+    coordinator = hass.data[DOMAIN][entry.entry_id]
+    async_add_entities([{{ component_slug.title().replace('_', '') }}Sensor(coordinator)])
+    {%- else -%}
+    async_add_entities([{{ component_slug.title().replace('_', '') }}Sensor()])
+    {%- endif %}
+
+class {{ component_slug.title().replace('_', '') }}Sensor({{ component_slug.title().replace('_', '') }}Entity, SensorEntity):
+    """{{ component_name }} Sensor class."""
+
+    _attr_name = "Status"
+
+    @property
+    def native_value(self) -> str:
+        """Return the native value of the sensor."""
+        {% if "polling" in integration_type -%}
+        return self.coordinator.data.get("state")
+        {%- else -%}
+        return "OK"
+        {%- endif %}

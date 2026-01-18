@@ -7,19 +7,19 @@ component_name:
   type: str
   qmark: "> "
   help: |
-    
+
     What is your component name?
-    
+
     This is the human-readable name that will appear in the Home Assistant UI.
     Use title case and be descriptive but concise.
-    
+
     Examples:
     * "Acme Thermostat" (for a specific device/brand)
     * "Solar Production" (for a data source)
     * "Room Occupancy" (for a sensor type)
-    
+
     Avoid generic names like "Sensor" or "My Component"
-    
+
   placeholder: "Acme Thermostat"
   validator: "{% if not component_name %}Component name is required{% endif %}"
 
@@ -27,28 +27,28 @@ component_slug:
   type: str
   qmark: "> "
   help: |
-    
+
     Component slug (leave blank to auto-generate from name)
-    
+
     This is the Python identifier used internally. It must be:
     * Lowercase
     * Use underscores (not hyphens or spaces)
     * Start with a letter
     * Be unique across all Home Assistant integrations
-    
+
     Examples: acme_thermostat, solar_production, room_occupancy
-    
+
     If you leave this blank, it will be auto-generated from your component name.
-    
+
   default: "{{ component_name.lower().replace(' ', '_').replace('-', '_') }}"
 
 repo_name:
   type: str
   qmark: "> "
   help: |
-    
+
     Repository name (will be: ha-<slug>)
-    
+
   default: "ha-{{ component_slug.replace('_', '-') }}"
   placeholder: "ha-{{ component_slug.replace('_', '-') }}"
   validator: "{% if not repo_name.startswith('ha-') %}Repository name must start with 'ha-'{% endif %}"
@@ -57,13 +57,13 @@ author_name:
   type: str
   qmark: "> "
   help: |
-    
+
     Your name
-    
+
     Used in:
     * LICENSE file (copyright holder)
     * Documentation and README
-    
+
   placeholder: "Andrew Carnegie"
   validator: "{% if not author_name %}Your name is required{% endif %}"
 
@@ -71,13 +71,13 @@ author_email:
   type: str
   qmark: "> "
   help: |
-    
+
     Your email
-    
+
     Used in:
     * pyproject.toml maintainer info
     * Git commit configuration
-    
+
   placeholder: "nachos@example.com"
   validator: "{% if not author_email %}Your email is required{% endif %}"
 
@@ -85,20 +85,20 @@ using_github:
   type: bool
   qmark: "> "
   help: |
-    
+
     Are you using GitHub for hosting?
-    
+
   default: true
 
 vcs_name:
   type: str
   qmark: "> "
   help: |
-    
+
     What version control hosting service are you using?
-    
+
     Examples: GitLab, Gitea, Bitbucket
-    
+
   default: "{% if using_github %}GitHub{% else %}GitLab{% endif %}"
   when: "{{ not using_github }}"
 
@@ -106,11 +106,11 @@ vcs_uri_prefix:
   type: str
   qmark: "> "
   help: |
-    
+
     What is your VCS URI prefix?
-    
+
     Include the trailing slash.
-    
+
   default: "{% if using_github %}https://github.com/{% else %}https://gitlab.com/{% endif %}"
   when: "{{ not using_github }}"
   placeholder: "https://gitlab.com/"
@@ -119,14 +119,14 @@ git_username:
   type: str
   qmark: "> "
   help: |
-    
+
     Git hosting username
-    
+
     Used in:
     * Repository URLs in manifest.json
     * Documentation links
     * Codeowners file (@username)
-    
+
   default: "{{ author_email.split('@')[0] }}"
   placeholder: "nachos"
   validator: "{% if not git_username %}Git hosting username is required{% endif %}"
@@ -135,73 +135,80 @@ include_config_flow:
   type: bool
   qmark: "> "
   help: |
-    
+
     Include config flow for UI configuration?
-    
+
     Config flows allow users to set up your integration through the Home Assistant UI
     instead of requiring YAML configuration. This is the modern approach and strongly
     recommended for new integrations.
-    
+
     If you choose no, users will need to configure your component in configuration.yaml.
-    
+
     Learn more: https://developers.home-assistant.io/docs/config_entries_config_flow_handler
-    
+
   default: true
 
-iot_class:
+integration_type:
   type: str
   qmark: "> "
   help: |
-    
-    IoT class (how your component communicates with devices/services)
-    
-    This classification helps users understand your component's behavior:
-    
-    * local_polling: Regularly checks a device on your local network (e.g., every 30s)
-    * local_push: Device on local network sends updates when state changes
-    * cloud_polling: Regularly checks a cloud API for updates
-    * cloud_push: Cloud service sends updates when state changes (webhooks, websockets)
-    * calculated: Performs calculations only, no external communication
-    * assumed_state: Cannot confirm device state, assumes commands succeed
-    * decide_later: Choose this if you're not sure yet (you can update manifest.json later)
-    
+    How does your integration get its data?
+
+    * local_polling: Checks local devices on a schedule (Uses Coordinator).
+    * cloud_polling: Checks a cloud API on a schedule (Uses Coordinator).
+    * local_push: Local devices send data to HA immediately (e.g., Websockets).
+    * cloud_push: Cloud services send data to HA via webhooks.
+    * none: No external data; used for internal logic or services only.
+    * assumed_state: One-way communication (e.g., IR/RF). HA cannot verify device state.
+
     Most integrations are either local_polling or cloud_polling.
-    
+
     Learn more: https://developers.home-assistant.io/docs/core/entity/#properties
-    
-  default: decide_later
   choices:
     - local_polling
-    - local_push
     - cloud_polling
+    - local_push
     - cloud_push
-    - calculated
     - assumed_state
-    - decide_later
+    - none
+  default: local_polling
+
+iot_class:
+  type: str
+  default: >-
+    {% if integration_type == 'none' %}calculated
+    {% else %}{{ integration_type }}{% endif %}
 
 include_mit_license:
   type: bool
   qmark: "> "
   help: |
-    
+
     Include MIT License?
-    
+
     The MIT License is a permissive open-source license that allows others to use,
     modify, and distribute your code with minimal restrictions. It only requires:
     * Attribution (keeping your copyright notice)
     * Including the license text in distributions
-    
+
     Most Home Assistant custom components use either MIT or Apache-2.0 licenses.
     MIT is simpler and more common for smaller projects.
-    
+
     If you choose no, remember to add your own LICENSE file before publishing.
-    
+
     Learn more: https://choosealicense.com/licenses/mit/
-    
+
   default: true
 
 # Conditional file exclusion
 _exclude:
+  # Exclude Coordinator for non-polling types
+  - "{% if integration_type in ['none', 'assumed_state', 'local_push', 'cloud_push'] %}custom_components/{{ component_slug }}/coordinator.py.jinja{% endif %}"
+
+  # Exclude API only for 'none' (Calculated integrations don't need external comms)
+  - "{% if integration_type == 'none' %}custom_components/{{ component_slug }}/api.py.jinja{% endif %}"
+
+  # Config Flow exclusions
   - "{% if not include_config_flow %}custom_components/{{ component_slug }}/config_flow.py.jinja{% endif %}"
   - "{% if not include_config_flow %}custom_components/{{ component_slug }}/strings.json.jinja{% endif %}"
 
@@ -214,33 +221,38 @@ _tasks:
 
 # Post-generation message
 _message_after_copy: |
-  
+
   Component {{ component_name }} created successfully!
-  
+
+  Your integration is configured as: {{ integration_type }} (IoT Class: {{ iot_class }})
+
   Next steps:
-  {% if iot_class == 'decide_later' %}
-    0. Update 'iot_class' in custom_components/{{ component_slug }}/manifest.json
-       This is required for Home Assistant to accept your component.
-       Choose from: local_polling, local_push, cloud_polling, cloud_push, calculated, assumed_state
-  {% endif %}
-  
-    1. Create a new repository on {{ vcs_name }}
+
+    0. Create a new repository on {{ vcs_name }}
        Suggested name: {{ repo_name }}
-  
-    2. Push your code:
+
+    1. Set up upstream repository:
        git remote add origin {{ vcs_uri_prefix }}{{ git_username }}/{{ repo_name }}.git
        git push -u origin main
-  
+
+    2. Where to write your logic:
+       {% if 'polling' in integration_type -%}
+       * Edit 'custom_components/{{ component_slug }}/coordinator.py' to fetch your data.
+       {%- elif integration_type != 'none' -%}
+       * Edit 'custom_components/{{ component_slug }}/api.py' to handle communication.
+       {%- endif %}
+       * Edit 'custom_components/{{ component_slug }}/sensor.py' to define your entities.
+
     3. Set up development environment:
-       - Option A: Use devcontainer (VS Code or compatible IDE)
-       - Option B: Manual setup with uv:
+       * Option A: Use devcontainer (VS Code or compatible IDE)
+       * Option B: Manual setup with uv:
          uv venv
          source .venv/bin/activate  # or .venv/Scripts/activate on Windows
          uv pip install -e .[dev]
-  
+
     4. Run tests:
        pytest
+
   {% if not include_mit_license %}
-  
   Note: Don't forget to add a LICENSE file! Visit https://choosealicense.com/ for guidance.
   {% endif %}
