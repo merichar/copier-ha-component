@@ -175,9 +175,7 @@ integration_type:
 
 iot_class:
   type: str
-  default: >-
-    {% if integration_type == 'none' %}calculated
-    {% else %}{{ integration_type }}{% endif %}
+  default: "{% if integration_type == 'none' %}calculated{% else %}{{ integration_type }}{% endif %}"
 
 include_mit_license:
   type: bool
