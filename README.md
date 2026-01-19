@@ -13,7 +13,7 @@ uv tool install copier
 copier copy --trust gh:merichar/copier-ha-component your-component-name
 ```
 
-Follow the prompts, then see your component's `DEVELOPMENT.md` for next steps.
+Follow the prompts, then see your component's [DEVELOPMENT.md](template/DEVELOPMENT.md.jinja) for next steps.
 
 ## Features
 
@@ -90,14 +90,26 @@ your-component-name/
 │       ├── __init__.py
 │       ├── manifest.json
 │       ├── const.py
-│       ├── entity.py              # Base entity class
-│       ├── sensor.py              # Example sensor platform
-│       ├── coordinator.py         # Data fetching (polling integrations)
-│       ├── api.py                 # API/communication layer (if applicable)
-│       ├── config_flow.py         # UI configuration (optional)
-│       └── strings.json           # Translations (optional)
+│       ├── diagnostics.py         # Debug data export
+│       ├── system_health.py       # System health info
+│       ├── coordinator.py         # Data fetching (polling integrations only)
+│       ├── config_flow.py         # UI configuration (if enabled)
+│       └── strings.json           # Translations (if config flow enabled)
 ├── scripts/
-│   └── check_version.py
+│   ├── check_version.py
+│   ├── scaffold.py                # Add platforms/features on-demand
+│   ├── SCAFFOLD.md                # Scaffold documentation
+│   └── scaffolds/                 # Templates for platforms
+│       ├── entity.py.jinja          # Base entity class
+│       ├── ENTITY_BASE_CLASS.md     # Base entity guide
+│       ├── api.py.jinja             # API client
+│       ├── application_credentials.py.jinja  # OAuth
+│       ├── APPLICATION_CREDENTIALS_GUIDE.md  # OAuth guide
+│       ├── services.yaml.jinja      # Custom services
+│       ├── sensor.py.jinja          # Sensor platform
+│       ├── binary_sensor.py.jinja   # Binary sensor
+│       ├── switch.py.jinja          # Switch platform
+│       └── ... (more platforms)
 ├── tests/
 │   └── test_init.py
 ├── docker-compose.yml
@@ -108,11 +120,29 @@ your-component-name/
 └── DEVELOPMENT.md
 ```
 
-**Architecture varies by integration type:**
-* **Polling integrations** (local_polling, cloud_polling): Include coordinator.py, api.py, entity.py
-* **Push integrations** (local_push, cloud_push): Include api.py, entity.py (no coordinator)
-* **Calculated integrations** (none): Include entity.py only
-* **Assumed state** (IR/RF devices): Include entity.py with assumed_state flag
+**Core files included:**
+- Integration core: `__init__.py`, `manifest.json`, `const.py`
+- Diagnostics: `diagnostics.py`, `system_health.py`
+- Coordinator: `coordinator.py` (polling integrations only)
+- Config flow: `config_flow.py`, `strings.json` (if enabled)
+
+**Platforms added on-demand:**
+After generation, add platforms using the scaffold script:
+```bash
+python scripts/scaffold.py sensor
+python scripts/scaffold.py switch
+python scripts/scaffold.py api        # If you need API communication
+python scripts/scaffold.py entity     # If you want shared base class
+```
+
+**Available scaffolds:**
+- Base: `entity` (shared base class for multi-platform integrations)
+- Communication: `api`, `application_credentials` (OAuth)
+- Features: `services` (custom actions)
+- Platforms: `sensor`, `binary_sensor`, `switch`, `button`, `light`, `climate`, `cover`, `fan`, `lock`
+- Automation: `device_trigger`, `device_action`, `device_condition`
+
+See generated component's [scripts/SCAFFOLD.md](template/scripts/SCAFFOLD.md) for complete scaffold documentation.
 
 ## After Generation
 
@@ -134,7 +164,7 @@ uv pip install -e .[dev]
 pytest
 ```
 
-See your component's `DEVELOPMENT.md` for complete details.
+See generated component's [DEVELOPMENT.md](template/DEVELOPMENT.md.jinja) for complete details.
 
 ## Template Development
 

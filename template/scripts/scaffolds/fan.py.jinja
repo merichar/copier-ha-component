@@ -1,0 +1,164 @@
+"""Fan platform for {{ component_name }}."""
+
+from __future__ import annotations
+
+from typing import Any
+
+from homeassistant.components.fan import FanEntity, FanEntityFeature
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+{% if has_entity_base -%}
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from homeassistant.util.percentage import (
+    percentage_to_ranged_value,
+    ranged_value_to_percentage,
+)
+
+from .const import DOMAIN
+from .coordinator import {{ component_slug|replace('_', ' ')|title|replace(' ', '') }}DataUpdateCoordinator
+from .entity import {{ component_slug|replace('_', ' ')|title|replace(' ', '') }}Entity
+{%- else -%}
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from homeassistant.util.percentage import (
+    percentage_to_ranged_value,
+    ranged_value_to_percentage,
+)
+
+from .const import DOMAIN
+from .coordinator import {{ component_slug|replace('_', ' ')|title|replace(' ', '') }}DataUpdateCoordinator
+{%- endif %}
+
+SPEED_RANGE = (1, 3)  # Fan supports 3 speeds
+
+
+async def async_setup_entry(
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
+    """Set up the fan platform."""
+    coordinator = hass.data[DOMAIN][entry.entry_id]
+
+    async_add_entities(
+        [
+            {{ component_slug|replace('_', ' ')|title|replace(' ', '') }}Fan(coordinator, entry),
+        ]
+    )
+
+
+{% if has_entity_base -%}
+class {{ component_slug|replace('_', ' ')|title|replace(' ', '') }}Fan(
+    {{ component_slug|replace('_', ' ')|title|replace(' ', '') }}Entity, FanEntity
+):
+    """{{ component_name }} Fan class."""
+
+    _attr_supported_features = (
+        FanEntityFeature.SET_SPEED
+        | FanEntityFeature.OSCILLATE
+        | FanEntityFeature.DIRECTION
+    )
+
+    def __init__(
+        self,
+        coordinator: {{ component_slug|replace('_', ' ')|title|replace(' ', '') }}DataUpdateCoordinator,
+        entry: ConfigEntry,
+    ) -> None:
+        """Initialize the fan."""
+        super().__init__(coordinator, "fan")
+        self._attr_name = f"{entry.title} Fan"
+{%- else -%}
+class {{ component_slug|replace('_', ' ')|title|replace(' ', '') }}Fan(
+    CoordinatorEntity[{{ component_slug|replace('_', ' ')|title|replace(' ', '') }}DataUpdateCoordinator], FanEntity
+):
+    """{{ component_name }} Fan class."""
+
+    _attr_supported_features = (
+        FanEntityFeature.SET_SPEED
+        | FanEntityFeature.OSCILLATE
+        | FanEntityFeature.DIRECTION
+    )
+
+    def __init__(
+        self,
+        coordinator: {{ component_slug|replace('_', ' ')|title|replace(' ', '') }}DataUpdateCoordinator,
+        entry: ConfigEntry,
+    ) -> None:
+        """Initialize the fan."""
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{entry.entry_id}_fan"
+        self._attr_name = f"{entry.title} Fan"
+{%- endif %}
+
+    @property
+    def is_on(self) -> bool | None:
+        """Return true if the fan is on."""
+        # TODO: Extract fan state from coordinator.data
+        return self.coordinator.data.get("fan_state", False)
+
+    @property
+    def percentage(self) -> int | None:
+        """Return the current speed percentage."""
+        # TODO: Extract speed from coordinator.data
+        speed = self.coordinator.data.get("fan_speed", 0)
+        if speed == 0:
+            return 0
+        return ranged_value_to_percentage(SPEED_RANGE, speed)
+
+    @property
+    def speed_count(self) -> int:
+        """Return the number of speeds the fan supports."""
+        return int(SPEED_RANGE[1])
+
+    @property
+    def oscillating(self) -> bool | None:
+        """Return whether the fan is oscillating."""
+        # TODO: Extract oscillating state from coordinator.data
+        return self.coordinator.data.get("oscillating", False)
+
+    @property
+    def current_direction(self) -> str | None:
+        """Return the current direction of the fan."""
+        # TODO: Extract direction from coordinator.data
+        # Return "forward" or "reverse"
+        return self.coordinator.data.get("direction", "forward")
+
+    async def async_turn_on(
+        self,
+        percentage: int | None = None,
+        preset_mode: str | None = None,
+        **kwargs: Any,
+    ) -> None:
+        """Turn on the fan."""
+        # TODO: Implement turn_on logic
+        # await self.coordinator.api.turn_on_fan(percentage)
+        await self.coordinator.async_request_refresh()
+
+    async def async_turn_off(self, **kwargs: Any) -> None:
+        """Turn off the fan."""
+        # TODO: Implement turn_off logic
+        # await self.coordinator.api.turn_off_fan()
+        await self.coordinator.async_request_refresh()
+
+    async def async_set_percentage(self, percentage: int) -> None:
+        """Set the speed percentage of the fan."""
+        if percentage == 0:
+            await self.async_turn_off()
+            return
+
+        # TODO: Implement set_percentage logic
+        speed = percentage_to_ranged_value(SPEED_RANGE, percentage)
+        # await self.coordinator.api.set_fan_speed(speed)
+        await self.coordinator.async_request_refresh()
+
+    async def async_oscillate(self, oscillating: bool) -> None:
+        """Set oscillation of the fan."""
+        # TODO: Implement oscillate logic
+        # await self.coordinator.api.set_oscillating(oscillating)
+        await self.coordinator.async_request_refresh()
+
+    async def async_set_direction(self, direction: str) -> None:
+        """Set the direction of the fan."""
+        # TODO: Implement set_direction logic
+        # await self.coordinator.api.set_direction(direction)
+        await self.coordinator.async_request_refresh()

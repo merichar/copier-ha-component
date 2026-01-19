@@ -1,0 +1,80 @@
+"""Binary sensor platform for {{ component_name }}."""
+
+from __future__ import annotations
+
+from homeassistant.components.binary_sensor import (
+    BinarySensorDeviceClass,
+    BinarySensorEntity,
+)
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+{% if has_entity_base -%}
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
+
+from .const import DOMAIN
+from .coordinator import {{ component_slug|replace('_', ' ')|title|replace(' ', '') }}DataUpdateCoordinator
+from .entity import {{ component_slug|replace('_', ' ')|title|replace(' ', '') }}Entity
+{%- else -%}
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
+
+from .const import DOMAIN
+from .coordinator import {{ component_slug|replace('_', ' ')|title|replace(' ', '') }}DataUpdateCoordinator
+{%- endif %}
+
+
+async def async_setup_entry(
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
+    """Set up the binary sensor platform."""
+    coordinator = hass.data[DOMAIN][entry.entry_id]
+
+    # Add binary sensors
+    async_add_entities(
+        [
+            {{ component_slug|replace('_', ' ')|title|replace(' ', '') }}BinarySensor(coordinator, entry),
+        ]
+    )
+
+
+{% if has_entity_base -%}
+class {{ component_slug|replace('_', ' ')|title|replace(' ', '') }}BinarySensor(
+    {{ component_slug|replace('_', ' ')|title|replace(' ', '') }}Entity, BinarySensorEntity
+):
+    """{{ component_name }} Binary Sensor class."""
+
+    def __init__(
+        self,
+        coordinator: {{ component_slug|replace('_', ' ')|title|replace(' ', '') }}DataUpdateCoordinator,
+        entry: ConfigEntry,
+    ) -> None:
+        """Initialize the binary sensor."""
+        super().__init__(coordinator, "binary_sensor")
+        self._attr_name = f"{entry.title} Status"
+        self._attr_device_class = BinarySensorDeviceClass.CONNECTIVITY
+{%- else -%}
+class {{ component_slug|replace('_', ' ')|title|replace(' ', '') }}BinarySensor(
+    CoordinatorEntity[{{ component_slug|replace('_', ' ')|title|replace(' ', '') }}DataUpdateCoordinator],
+    BinarySensorEntity,
+):
+    """{{ component_name }} Binary Sensor class."""
+
+    def __init__(
+        self,
+        coordinator: {{ component_slug|replace('_', ' ')|title|replace(' ', '') }}DataUpdateCoordinator,
+        entry: ConfigEntry,
+    ) -> None:
+        """Initialize the binary sensor."""
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{entry.entry_id}_binary_sensor"
+        self._attr_name = f"{entry.title} Status"
+        self._attr_device_class = BinarySensorDeviceClass.CONNECTIVITY
+{%- endif %}
+
+    @property
+    def is_on(self) -> bool | None:
+        """Return true if the binary sensor is on."""
+        # TODO: Extract binary sensor state from coordinator.data
+        return self.coordinator.data.get("is_connected", False)

@@ -1,0 +1,88 @@
+"""Device conditions for {{ component_name }}."""
+
+from __future__ import annotations
+
+from typing import Any
+
+import voluptuous as vol
+
+from homeassistant.components.device_automation import DEVICE_CONDITION_BASE_SCHEMA
+from homeassistant.const import CONF_DEVICE_ID, CONF_DOMAIN, CONF_TYPE
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers import condition, config_validation as cv
+from homeassistant.helpers.typing import ConfigType
+
+from .const import DOMAIN
+
+# TODO: Define condition types for your device
+# Examples: "is_on", "is_connected", "battery_low"
+CONDITION_TYPES = {"is_on", "is_connected"}
+
+CONDITION_SCHEMA = DEVICE_CONDITION_BASE_SCHEMA.extend(
+    {
+        vol.Required(CONF_TYPE): vol.In(CONDITION_TYPES),
+    }
+)
+
+
+async def async_get_conditions(
+    hass: HomeAssistant, device_id: str
+) -> list[dict[str, Any]]:
+    """List device conditions for {{ component_name }} devices."""
+    # TODO: Customize condition list based on device capabilities
+    
+    conditions = []
+    
+    # Add all defined condition types
+    for condition_type in CONDITION_TYPES:
+        conditions.append(
+            {
+                CONF_TYPE: condition_type,
+                CONF_DEVICE_ID: device_id,
+                CONF_DOMAIN: DOMAIN,
+            }
+        )
+    
+    return conditions
+
+
+@callback
+def async_condition_from_config(
+    hass: HomeAssistant, config: ConfigType
+) -> condition.ConditionCheckerType:
+    """Create a function to test a device condition."""
+    
+    def test_condition(hass: HomeAssistant, variables: dict[str, Any]) -> bool:
+        """Test if condition is met."""
+        # TODO: Implement condition checking logic
+        
+        condition_type = config[CONF_TYPE]
+        device_id = config[CONF_DEVICE_ID]
+        
+        # Get the coordinator or entity for this device
+        # This assumes you have a way to map device_id to state
+        
+        if condition_type == "is_on":
+            # TODO: Check if device is on
+            # Example: return coordinator.data.get(device_id, {}).get("state") == "on"
+            return False
+        
+        if condition_type == "is_connected":
+            # TODO: Check if device is connected
+            # Example: return coordinator.data.get(device_id, {}).get("connected", False)
+            return False
+        
+        return False
+    
+    return test_condition
+
+
+async def async_get_condition_capabilities(
+    hass: HomeAssistant, config: ConfigType
+) -> dict[str, vol.Schema]:
+    """List condition capabilities."""
+    # TODO: Add any additional fields for condition configuration
+    # Example: Allow users to specify thresholds, comparison operators, etc.
+    
+    # Return empty schema if no additional configuration needed
+    return {}

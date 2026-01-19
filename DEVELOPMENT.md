@@ -63,14 +63,26 @@ copier-ha-component/
     │       ├── __init__.py.jinja
     │       ├── manifest.json.jinja
     │       ├── const.py.jinja
-    │       ├── entity.py.jinja        # Base entity (all types)
-    │       ├── sensor.py.jinja        # Example platform
-    │       ├── coordinator.py.jinja   # Conditional: polling only
-    │       ├── api.py.jinja           # Conditional: all except 'none'
-    │       ├── config_flow.py.jinja   # Conditional: if enabled
-    │       └── strings.json.jinja     # Conditional: if config flow
+    │       ├── diagnostics.py.jinja
+    │       ├── system_health.py.jinja
+    │       ├── coordinator.py.jinja     # Conditional: polling only
+    │       ├── config_flow.py.jinja     # Conditional: if enabled
+    │       └── strings.json.jinja       # Conditional: if config flow
     ├── scripts/
-    │   └── check_version.py.jinja
+    │   ├── check_version.py.jinja
+    │   ├── scaffold.py                  # Script to add platforms/features
+    │   ├── SCAFFOLD.md                  # Scaffold documentation
+    │   └── scaffolds/                   # Templates for on-demand generation
+    │       ├── entity.py.jinja          # Base entity class
+    │       ├── ENTITY_BASE_CLASS.md     # Base entity guide
+    │       ├── api.py.jinja             # API client
+    │       ├── application_credentials.py.jinja  # OAuth
+    │       ├── APPLICATION_CREDENTIALS_GUIDE.md  # OAuth guide
+    │       ├── services.yaml.jinja      # Custom services
+    │       ├── sensor.py.jinja          # Sensor platform
+    │       ├── binary_sensor.py.jinja   # Binary sensor
+    │       ├── switch.py.jinja          # Switch platform
+    │       └── ... (more platforms)
     ├── tests/
     │   └── test_init.py.jinja
     ├── DEVELOPMENT.md.jinja
@@ -81,9 +93,12 @@ copier-ha-component/
     └── README.md.jinja
 ```
 
+**Note on platforms and features:**
+Platforms (sensor, switch, etc.), `api.py`, `entity.py`, and `services.yaml` are NOT in the default template. They're generated on-demand using `scripts/scaffold.py` from templates in `scripts/scaffolds/`.
+
 ## Key Files
 
-### copier.yml
+### `copier.yml`
 
 Defines:
 - Questions asked during generation
@@ -156,8 +171,6 @@ copier copy --trust --defaults --vcs-ref HEAD \
 * `--trust` - Required because template uses tasks for git initialization
 * `--vcs-ref HEAD` - Use current local state, not latest tag/remote
 * `--defaults` - Non-interactive mode, uses default values
-
-
 
 **Test the generated component:**
    ```bash
@@ -234,10 +247,12 @@ git commit --no-verify
 
 ### Updating Documentation
 
-- Update template repo `README.md` (how to use the template)
-- Update this `DEVELOPMENT.md` (how to work on the template)
-- Update `template/DEVELOPMENT.md.jinja` (for generated component developers)
-- Update `template/README.md` (how to use the generated component)
+- Update template repo [README.md](README.md) (how to use the template)
+- Update this [DEVELOPMENT.md](DEVELOPMENT.md) (how to work on the template)
+- Update [template/DEVELOPMENT.md.jinja](template/DEVELOPMENT.md.jinja) (for generated component developers)
+- Update [template/README.md.jinja](template/README.md.jinja) (how to use the generated component)
+- Update [template/scripts/SCAFFOLD.md](template/scripts/SCAFFOLD.md) (how to use the scaffold system)
+- Update scaffold-specific guides in `template/scripts/scaffolds/` (e.g., [ENTITY_BASE_CLASS.md](template/scripts/scaffolds/ENTITY_BASE_CLASS.md))
 
 ### Modifying Existing Templates
 
@@ -322,7 +337,7 @@ The script will:
 * Create annotated tag
 * Prompt to push to remote
 
-When the script is run without arguments, it returns the current tag.
+*Note: When the script is run without arguments, it returns the current tag.*
 
 ### Option B: Manual Release
 

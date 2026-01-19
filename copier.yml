@@ -203,12 +203,12 @@ _exclude:
   # Exclude Coordinator for non-polling types
   - "{% if integration_type in ['none', 'assumed_state', 'local_push', 'cloud_push'] %}custom_components/{{ component_slug }}/coordinator.py{% endif %}"
 
-  # Exclude API only for 'none'
-  - "{% if integration_type == 'none' %}custom_components/{{ component_slug }}/api.py{% endif %}"
-
   # Config Flow exclusions
   - "{% if not include_config_flow %}custom_components/{{ component_slug }}/config_flow.py{% endif %}"
   - "{% if not include_config_flow %}custom_components/{{ component_slug }}/strings.json{% endif %}"
+
+  # Always included: diagnostics.py, system_health.py
+  # Not in template (added via script): api.py, services.yaml, platforms (sensor, switch, etc.)
 
 # Post-generation tasks
 _tasks:
@@ -233,22 +233,36 @@ _message_after_copy: |
        git remote add origin {{ vcs_uri_prefix }}{{ git_username }}/{{ repo_name }}.git
        git push -u origin main
 
-    2. Where to write your logic:
+    2. Add components to your integration:
        {% if 'polling' in integration_type -%}
-       * Edit 'custom_components/{{ component_slug }}/coordinator.py' to fetch your data.
-       {%- elif integration_type != 'none' -%}
-       * Edit 'custom_components/{{ component_slug }}/api.py' to handle communication.
+       python scripts/scaffold.py api        # for fetching data from external service
+       {%- elif integration_type in ['local_push', 'cloud_push'] -%}
+       python scripts/scaffold.py api        # for webhook/websocket handling
+       {%- elif integration_type == 'assumed_state' -%}
+       python scripts/scaffold.py api        # for sending commands (one-way)
        {%- endif %}
-       * Edit 'custom_components/{{ component_slug }}/sensor.py' to define your entities.
+       python scripts/scaffold.py sensor
+       python scripts/scaffold.py switch
+       (Available: api, sensor, binary_sensor, switch, button, light, cover, device_trigger, and more)
 
-    3. Set up development environment:
+    3. Where to write your logic:
+       {% if 'polling' in integration_type -%}
+       * Edit 'custom_components/{{ component_slug }}/coordinator.py' to use your API client for data fetching
+       {%- elif integration_type in ['local_push', 'cloud_push'] -%}
+       * Edit 'custom_components/{{ component_slug }}/__init__.py' to set up webhooks/websockets
+       {%- elif integration_type == 'assumed_state' -%}
+       * Edit your API client to send commands to devices
+       {%- endif %}
+       * Edit generated platform files (sensor.py, switch.py, etc.) to define your entities.
+
+    4. Set up development environment:
        * Option A: Use devcontainer (VS Code or compatible IDE)
        * Option B: Manual setup with uv:
          uv venv
          source .venv/bin/activate  # or .venv/Scripts/activate on Windows
          uv pip install -e .[dev]
 
-    4. Run tests:
+    5. Run tests:
        pytest
   {%- if not include_mit_license %}
 
