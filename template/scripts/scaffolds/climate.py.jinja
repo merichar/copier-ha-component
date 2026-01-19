@@ -1,0 +1,135 @@
+"""Climate platform for {{ component_name }}."""
+
+from __future__ import annotations
+
+from typing import Any
+
+from homeassistant.components.climate import (
+    ClimateEntity,
+    ClimateEntityFeature,
+    HVACMode,
+)
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import ATTR_TEMPERATURE, UnitOfTemperature
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+{% if has_entity_base -%}
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
+
+from .const import DOMAIN
+from .coordinator import {{ component_slug|replace('_', ' ')|title|replace(' ', '') }}DataUpdateCoordinator
+from .entity import {{ component_slug|replace('_', ' ')|title|replace(' ', '') }}Entity
+{%- else -%}
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
+
+from .const import DOMAIN
+from .coordinator import {{ component_slug|replace('_', ' ')|title|replace(' ', '') }}DataUpdateCoordinator
+{%- endif %}
+
+
+async def async_setup_entry(
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
+    """Set up the climate platform."""
+    coordinator = hass.data[DOMAIN][entry.entry_id]
+
+    async_add_entities(
+        [
+            {{ component_slug|replace('_', ' ')|title|replace(' ', '') }}Climate(coordinator, entry),
+        ]
+    )
+
+
+{% if has_entity_base -%}
+class {{ component_slug|replace('_', ' ')|title|replace(' ', '') }}Climate(
+    {{ component_slug|replace('_', ' ')|title|replace(' ', '') }}Entity, ClimateEntity
+):
+    """{{ component_name }} Climate class."""
+
+    _attr_temperature_unit = UnitOfTemperature.CELSIUS
+    _attr_hvac_modes = [HVACMode.OFF, HVACMode.HEAT, HVACMode.COOL, HVACMode.AUTO]
+    _attr_supported_features = (
+        ClimateEntityFeature.TARGET_TEMPERATURE
+        | ClimateEntityFeature.FAN_MODE
+    )
+    _attr_fan_modes = ["auto", "low", "medium", "high"]
+
+    def __init__(
+        self,
+        coordinator: {{ component_slug|replace('_', ' ')|title|replace(' ', '') }}DataUpdateCoordinator,
+        entry: ConfigEntry,
+    ) -> None:
+        """Initialize the climate entity."""
+        super().__init__(coordinator, "climate")
+        self._attr_name = f"{entry.title} Thermostat"
+{%- else -%}
+class {{ component_slug|replace('_', ' ')|title|replace(' ', '') }}Climate(
+    CoordinatorEntity[{{ component_slug|replace('_', ' ')|title|replace(' ', '') }}DataUpdateCoordinator], ClimateEntity
+):
+    """{{ component_name }} Climate class."""
+
+    _attr_temperature_unit = UnitOfTemperature.CELSIUS
+    _attr_hvac_modes = [HVACMode.OFF, HVACMode.HEAT, HVACMode.COOL, HVACMode.AUTO]
+    _attr_supported_features = (
+        ClimateEntityFeature.TARGET_TEMPERATURE
+        | ClimateEntityFeature.FAN_MODE
+    )
+    _attr_fan_modes = ["auto", "low", "medium", "high"]
+
+    def __init__(
+        self,
+        coordinator: {{ component_slug|replace('_', ' ')|title|replace(' ', '') }}DataUpdateCoordinator,
+        entry: ConfigEntry,
+    ) -> None:
+        """Initialize the climate entity."""
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{entry.entry_id}_climate"
+        self._attr_name = f"{entry.title} Thermostat"
+{%- endif %}
+
+    @property
+    def current_temperature(self) -> float | None:
+        """Return the current temperature."""
+        # TODO: Extract current temperature from coordinator.data
+        return self.coordinator.data.get("current_temperature")
+
+    @property
+    def target_temperature(self) -> float | None:
+        """Return the target temperature."""
+        # TODO: Extract target temperature from coordinator.data
+        return self.coordinator.data.get("target_temperature")
+
+    @property
+    def hvac_mode(self) -> HVACMode:
+        """Return current HVAC mode."""
+        # TODO: Extract HVAC mode from coordinator.data
+        mode = self.coordinator.data.get("hvac_mode", "off")
+        return HVACMode(mode)
+
+    @property
+    def fan_mode(self) -> str | None:
+        """Return the fan setting."""
+        # TODO: Extract fan mode from coordinator.data
+        return self.coordinator.data.get("fan_mode", "auto")
+
+    async def async_set_temperature(self, **kwargs: Any) -> None:
+        """Set new target temperature."""
+        if (temperature := kwargs.get(ATTR_TEMPERATURE)) is None:
+            return
+        # TODO: Implement set_temperature logic
+        # await self.coordinator.api.set_temperature(temperature)
+        await self.coordinator.async_request_refresh()
+
+    async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
+        """Set new HVAC mode."""
+        # TODO: Implement set_hvac_mode logic
+        # await self.coordinator.api.set_hvac_mode(hvac_mode.value)
+        await self.coordinator.async_request_refresh()
+
+    async def async_set_fan_mode(self, fan_mode: str) -> None:
+        """Set new fan mode."""
+        # TODO: Implement set_fan_mode logic
+        # await self.coordinator.api.set_fan_mode(fan_mode)
+        await self.coordinator.async_request_refresh()

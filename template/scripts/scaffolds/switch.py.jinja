@@ -1,0 +1,88 @@
+"""Switch platform for {{ component_name }}."""
+
+from __future__ import annotations
+
+from typing import Any
+
+from homeassistant.components.switch import SwitchEntity
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+{% if has_entity_base -%}
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
+
+from .const import DOMAIN
+from .coordinator import {{ component_slug|replace('_', ' ')|title|replace(' ', '') }}DataUpdateCoordinator
+from .entity import {{ component_slug|replace('_', ' ')|title|replace(' ', '') }}Entity
+{%- else -%}
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
+
+from .const import DOMAIN
+from .coordinator import {{ component_slug|replace('_', ' ')|title|replace(' ', '') }}DataUpdateCoordinator
+{%- endif %}
+
+
+async def async_setup_entry(
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
+    """Set up the switch platform."""
+    coordinator = hass.data[DOMAIN][entry.entry_id]
+
+    # Add switches
+    async_add_entities(
+        [
+            {{ component_slug|replace('_', ' ')|title|replace(' ', '') }}Switch(coordinator, entry),
+        ]
+    )
+
+
+{% if has_entity_base -%}
+class {{ component_slug|replace('_', ' ')|title|replace(' ', '') }}Switch(
+    {{ component_slug|replace('_', ' ')|title|replace(' ', '') }}Entity, SwitchEntity
+):
+    """{{ component_name }} Switch class."""
+
+    def __init__(
+        self,
+        coordinator: {{ component_slug|replace('_', ' ')|title|replace(' ', '') }}DataUpdateCoordinator,
+        entry: ConfigEntry,
+    ) -> None:
+        """Initialize the switch."""
+        super().__init__(coordinator, "switch")
+        self._attr_name = f"{entry.title} Switch"
+{%- else -%}
+class {{ component_slug|replace('_', ' ')|title|replace(' ', '') }}Switch(
+    CoordinatorEntity[{{ component_slug|replace('_', ' ')|title|replace(' ', '') }}DataUpdateCoordinator], SwitchEntity
+):
+    """{{ component_name }} Switch class."""
+
+    def __init__(
+        self,
+        coordinator: {{ component_slug|replace('_', ' ')|title|replace(' ', '') }}DataUpdateCoordinator,
+        entry: ConfigEntry,
+    ) -> None:
+        """Initialize the switch."""
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{entry.entry_id}_switch"
+        self._attr_name = f"{entry.title} Switch"
+{%- endif %}
+
+    @property
+    def is_on(self) -> bool | None:
+        """Return true if switch is on."""
+        # TODO: Extract switch state from coordinator.data
+        return self.coordinator.data.get("switch_state", False)
+
+    async def async_turn_on(self, **kwargs: Any) -> None:
+        """Turn the switch on."""
+        # TODO: Implement turn_on logic
+        # await self.coordinator.api.turn_on()
+        await self.coordinator.async_request_refresh()
+
+    async def async_turn_off(self, **kwargs: Any) -> None:
+        """Turn the switch off."""
+        # TODO: Implement turn_off logic
+        # await self.coordinator.api.turn_off()
+        await self.coordinator.async_request_refresh()

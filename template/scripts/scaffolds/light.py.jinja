@@ -1,0 +1,105 @@
+"""Light platform for {{ component_name }}."""
+
+from __future__ import annotations
+
+from typing import Any
+
+from homeassistant.components.light import (
+    ATTR_BRIGHTNESS,
+    ColorMode,
+    LightEntity,
+)
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+{% if has_entity_base -%}
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
+
+from .const import DOMAIN
+from .coordinator import {{ component_slug|replace('_', ' ')|title|replace(' ', '') }}DataUpdateCoordinator
+from .entity import {{ component_slug|replace('_', ' ')|title|replace(' ', '') }}Entity
+{%- else -%}
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
+
+from .const import DOMAIN
+from .coordinator import {{ component_slug|replace('_', ' ')|title|replace(' ', '') }}DataUpdateCoordinator
+{%- endif %}
+
+
+async def async_setup_entry(
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
+    """Set up the light platform."""
+    coordinator = hass.data[DOMAIN][entry.entry_id]
+
+    # Add lights
+    async_add_entities(
+        [
+            {{ component_slug|replace('_', ' ')|title|replace(' ', '') }}Light(coordinator, entry),
+        ]
+    )
+
+
+{% if has_entity_base -%}
+class {{ component_slug|replace('_', ' ')|title|replace(' ', '') }}Light(
+    {{ component_slug|replace('_', ' ')|title|replace(' ', '') }}Entity, LightEntity
+):
+    """{{ component_name }} Light class."""
+
+    _attr_color_mode = ColorMode.BRIGHTNESS
+    _attr_supported_color_modes = {ColorMode.BRIGHTNESS}
+
+    def __init__(
+        self,
+        coordinator: {{ component_slug|replace('_', ' ')|title|replace(' ', '') }}DataUpdateCoordinator,
+        entry: ConfigEntry,
+    ) -> None:
+        """Initialize the light."""
+        super().__init__(coordinator, "light")
+        self._attr_name = f"{entry.title} Light"
+{%- else -%}
+class {{ component_slug|replace('_', ' ')|title|replace(' ', '') }}Light(
+    CoordinatorEntity[{{ component_slug|replace('_', ' ')|title|replace(' ', '') }}DataUpdateCoordinator], LightEntity
+):
+    """{{ component_name }} Light class."""
+
+    _attr_color_mode = ColorMode.BRIGHTNESS
+    _attr_supported_color_modes = {ColorMode.BRIGHTNESS}
+
+    def __init__(
+        self,
+        coordinator: {{ component_slug|replace('_', ' ')|title|replace(' ', '') }}DataUpdateCoordinator,
+        entry: ConfigEntry,
+    ) -> None:
+        """Initialize the light."""
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{entry.entry_id}_light"
+        self._attr_name = f"{entry.title} Light"
+{%- endif %}
+
+    @property
+    def is_on(self) -> bool | None:
+        """Return true if light is on."""
+        # TODO: Extract light state from coordinator.data
+        return self.coordinator.data.get("light_on", False)
+
+    @property
+    def brightness(self) -> int | None:
+        """Return the brightness of this light between 0..255."""
+        # TODO: Extract brightness from coordinator.data
+        return self.coordinator.data.get("brightness", 255)
+
+    async def async_turn_on(self, **kwargs: Any) -> None:
+        """Turn on the light."""
+        brightness = kwargs.get(ATTR_BRIGHTNESS)
+        # TODO: Implement turn_on logic
+        # await self.coordinator.api.turn_on_light(brightness)
+        await self.coordinator.async_request_refresh()
+
+    async def async_turn_off(self, **kwargs: Any) -> None:
+        """Turn off the light."""
+        # TODO: Implement turn_off logic
+        # await self.coordinator.api.turn_off_light()
+        await self.coordinator.async_request_refresh()

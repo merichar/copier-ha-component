@@ -6,11 +6,11 @@ This guide covers developing and testing this Home Assistant custom component.
 
 - [Environment Setup](#environment-setup)
 - [Project Structure](#project-structure)
+- [Adding Platforms and Features](#adding-platforms-and-features)
 - [Running Tests](#running-tests)
 - [Manual Testing with Home Assistant](#manual-testing-with-home-assistant)
 - [Code Quality](#code-quality)
 - [Debugging](#debugging)
-- [Adding Features](#adding-features)
 - [Release Process](#release-process)
 
 ## Environment Setup
@@ -122,15 +122,22 @@ Work directly on your host machine without containers.
 │       ├── __init__.py          # Component setup and entry points
 │       ├── manifest.json        # Component metadata and requirements
 │       ├── const.py             # Constants and configuration
-│       ├── entity.py            # Base entity class
-│       ├── sensor.py            # Example sensor platform
+│       ├── diagnostics.py       # Debug data export (always included)
+│       ├── system_health.py     # System health info (always included)
 {% if "polling" in integration_type %}│       ├── coordinator.py       # Data update coordinator
-{% endif %}{% if integration_type != "none" %}│       ├── api.py               # API/communication layer
 {% endif %}{% if include_config_flow %}│       ├── config_flow.py       # UI configuration flow
 │       ├── strings.json         # Translations for config flow
-{% endif %}│       └── [platforms]/        # Additional platforms (switch, binary_sensor, etc.)
+{% endif %}│       └── [platforms]/        # Add via scripts/scaffold.py
 ├── scripts/
-│   └── check_version.py         # Version consistency checker
+│   ├── check_version.py         # Version consistency checker
+│   ├── scaffold.py              # Add platforms and features
+│   ├── SCAFFOLD.md              # Scaffold documentation
+│   └── scaffolds/               # Platform templates
+│       ├── entity.py.jinja      # Base entity
+│       ├── ENTITY_BASE_CLASS.md # Base entity guide
+│       ├── api.py.jinja
+│       ├── sensor.py.jinja
+│       └── ...
 ├── tests/
 │   └── test_init.py             # Unit and integration tests
 ├── docker-compose.yml           # Run full HA instance for manual testing
@@ -139,14 +146,14 @@ Work directly on your host machine without containers.
 └── README.md                    # User-facing documentation
 ```
 
-### Key Files
+### Core Files (Always Included)
 
-**manifest.json**
+**`manifest.json`**
 - Defines your component's metadata for Home Assistant
 - Lists required dependencies and minimum Home Assistant version
 - Specifies IoT class: `{{ iot_class }}`
 
-**__init__.py**
+**`__init__.py`**
 - Entry point for your component
 {% if include_config_flow %}- Sets up config entries and forwards to platforms
 {% else %}- Sets up component from YAML configuration
@@ -154,55 +161,243 @@ Work directly on your host machine without containers.
 {% if "polling" in integration_type %}- Initializes the DataUpdateCoordinator
 {% endif %}
 
-**const.py**
+**`const.py`**
 - Defines constants used throughout the component
 - Domain name, logger, default configuration values
 - Update intervals, timeouts, and other configurable settings
 
-**entity.py**
-- Base entity class for all platforms
-{% if "polling" in integration_type %}- Extends CoordinatorEntity for automatic updates
-{% else %}- Extends Entity for manual state management
-{% endif %}- Provides common device_info and unique_id logic
-{% if integration_type == "assumed_state" %}- Configured with assumed_state=True for one-way communication
-{% endif %}
-- Inherit from this class when creating new entity types
+**`diagnostics.py`**
+- Provides debug data export for troubleshooting
+- Accessible via Settings -> Devices & Services -> Device -> Download Diagnostics
 
-{% if "polling" in integration_type %}**coordinator.py**
+**`system_health.py`**
+- Reports component health in Settings -> System -> System Health
+- Shows connection status and last update time
+
+{% if "polling" in integration_type %}**`coordinator.py`**
 - DataUpdateCoordinator manages periodic data fetching
 - Handles API calls and error recovery
 - **TODO**: Implement `_async_update_data()` with your API logic
 - Default update interval: 30 seconds (adjust in __init__)
 - All entities automatically update when coordinator fetches new data
 
-{% endif %}{% if integration_type != "none" %}**api.py**
-- Communication layer for external services/devices
-{% if "polling" in integration_type %}- Called by coordinator to fetch data
-{% elif "push" in integration_type %}- Handles incoming webhooks or websocket connections
-{% endif %}- **TODO**: Implement your API communication logic
-- Isolates network/device communication from Home Assistant logic
-
-{% endif %}**sensor.py**
-- Example sensor platform implementation
-{% if "polling" in integration_type %}- Uses coordinator data via CoordinatorEntity
-{% else %}- Manages its own state updates
-{% endif %}- Demonstrates proper entity class inheritance
-- **TODO**: Customize or add more sensor entities as needed
-
-{% if include_config_flow %}**config_flow.py**
+{% endif %}{% if include_config_flow %}**`config_flow.py`**
 - Handles UI-based configuration flow
 - Validates user input and creates config entries
 - Provides a better user experience than YAML configuration
 
-**strings.json**
+**`strings.json`**
 - Provides translations for the config flow UI
 - Currently only English, but can be expanded to other languages
 {% endif %}
 
-**hacs.json**
+**`hacs.json`**
 - HACS integration metadata
 - Makes component discoverable in HACS
 - Already configured with your component name
+
+### Scaffolded Files (Add As Needed)
+
+The following files are NOT included by default. Generate them using `python scripts/scaffold.py`:
+
+**`entity.py`** (optional base class)
+- Base entity class for all platforms
+{% if "polling" in integration_type %}- Extends CoordinatorEntity for automatic updates
+{% else %}- Extends Entity for manual state management
+{% endif %}- Provides common device_info and unique_id logic
+{% if integration_type == "assumed_state" %}- Configured with assumed_state=True for one-way communication
+{% endif %}- Recommended for multi-platform integrations
+
+**`api.py`** (communication layer)
+- Communication layer for external services/devices
+{% if "polling" in integration_type %}- Called by coordinator to fetch data
+{% elif "push" in integration_type %}- Handles incoming webhooks or websocket connections
+{% elif integration_type == "assumed_state" %}- Sends one-way commands to devices
+{% endif %}- Isolates network/device communication from Home Assistant logic
+
+**`services.yaml`** (custom services)
+- Defines custom actions beyond standard entity controls
+- Examples: refresh data, calibrate device, send custom commands
+
+**Platform files** (entity platforms)
+- `sensor.py`, `binary_sensor.py`, `switch.py`, `button.py`, etc.
+- Implement specific entity types for your integration
+- Auto-detect and use `entity.py` if present
+
+**Device automation** (optional)
+- `device_trigger.py`, `device_action.py`, `device_condition.py`
+- Enable device automation in the UI
+
+See [Adding Platforms and Features](#adding-platforms-and-features) below for usage.
+
+## Adding Platforms and Features
+
+Use the scaffold script to generate platforms and features:
+
+### List Available Scaffolds
+
+```bash
+python scripts/scaffold.py --list
+```
+
+### Common Workflow
+
+1. **Start with base entity class** (optional, recommended for multi-platform integrations):
+   ```bash
+   python scripts/scaffold.py entity
+   ```
+
+   Edit `custom_components/{{ component_slug }}/entity.py` to customize device_info and unique_id patterns.
+
+2. **Add API communication** (if your integration needs external communication):
+   ```bash
+   python scripts/scaffold.py api
+   ```
+
+   Edit `custom_components/{{ component_slug }}/api.py` to implement your API client.
+
+3. **Add platforms**:
+   ```bash
+   python scripts/scaffold.py sensor
+   python scripts/scaffold.py switch
+   python scripts/scaffold.py binary_sensor
+   ```
+
+   Platforms automatically use `entity.py` if present, or CoordinatorEntity if not.
+
+4. **Add custom services** (optional):
+   ```bash
+   python scripts/scaffold.py services
+   ```
+
+   Then register services in `__init__.py`.
+
+### Available Scaffolds
+
+**Base Classes:**
+- `entity` - Base entity class for shared device_info
+
+**Communication:**
+- `api` - API client for external communication
+- `application_credentials` - OAuth2 authorization flow
+
+**Entity Platforms:**
+- `sensor` - Read-only data (temperature, battery, status)
+- `binary_sensor` - On/off states (motion, door open/closed)
+- `switch` - Controllable on/off devices
+- `button` - Trigger actions (restart, calibrate)
+- `climate` - Thermostats and HVAC control
+- `cover` - Garage doors, blinds, shutters
+- `fan` - Fans with speed and direction control
+- `light` - Lights with brightness/color
+- `lock` - Smart locks
+
+**Optional Features:**
+- `services` - Custom service definitions
+
+**Device Automation:**
+- `device_trigger` - Automation triggers
+- `device_action` - Automation actions
+- `device_condition` - Automation conditions
+
+See [scripts/SCAFFOLD.md](scripts/SCAFFOLD.md) for complete documentation.
+
+### Example: Adding a Switch Platform
+
+```bash
+# Generate the scaffold
+python scripts/scaffold.py switch
+
+# Edit the file
+# custom_components/{{ component_slug }}/switch.py is now created
+
+# Customize the switch logic
+# - Implement is_on property
+# - Implement async_turn_on method
+# - Implement async_turn_off method
+```
+
+{% if include_config_flow %}The platform will be automatically discovered. Just restart Home Assistant.
+{% else %}Add to your `configuration.yaml`:
+```yaml
+switch:
+  - platform: {{ component_slug }}
+```
+{% endif %}
+
+### Regenerating with --force
+
+If you need to regenerate a file (e.g., after adding `entity.py`):
+
+```bash
+python scripts/scaffold.py sensor --force
+```
+
+This overwrites the existing file. **Make sure to save any custom changes first.**
+
+{% if "polling" in integration_type %}### Working with the Coordinator
+
+Your component uses a DataUpdateCoordinator for efficient data fetching.
+
+**Customize update interval** in `coordinator.py`:
+```python
+super().__init__(
+    hass,
+    LOGGER,
+    name=DOMAIN,
+    update_interval=timedelta(minutes=5),  # Adjust as needed
+)
+```
+
+**Implement data fetching** in `coordinator.py`:
+```python
+async def _async_update_data(self):
+    """Fetch data from API."""
+    try:
+        async with async_timeout.timeout(10):
+            # TODO: Replace with your API call
+            data = await self.api.fetch_data()
+        return data
+    except Exception as exception:
+        raise UpdateFailed(f"Error: {exception}") from exception
+```
+
+**Access coordinator data** in entities:
+```python
+@property
+def native_value(self):
+    """Return sensor value."""
+    return self.coordinator.data.get("temperature")
+```
+
+**Manually trigger refresh**:
+```python
+await self.coordinator.async_request_refresh()
+```
+
+{% elif integration_type != "none" %}### Direct Communication (No Coordinator)
+
+Your component communicates directly without a coordinator.
+
+**Implement communication** in `api.py`:
+```python
+async def send_command(self, command: str) -> bool:
+    """Send command to device."""
+    # TODO: Implement your communication logic
+    pass
+```
+
+**Update entity state** manually:
+```python
+async def async_turn_on(self, **kwargs):
+    """Turn on the device."""
+    success = await self.api.send_command("power_on")
+    if success:
+        self._attr_is_on = True
+        self.async_write_ha_state()
+```
+
+{% endif %}
 
 ## Running Tests
 
@@ -261,334 +456,163 @@ For testing your component in a real Home Assistant instance:
 
    This starts a full Home Assistant instance with your component automatically mounted.
 
-2. **Access Home Assistant**:
-   - Open http://localhost:8123
-   - Complete the initial setup
-   - Your component is automatically available as a custom component
-
-3. **View logs**:
+2. **View logs**:
    ```bash
    docker compose logs -f homeassistant
    ```
 
-   Press Ctrl+C to stop following logs.
+3. **Access Home Assistant**:
+   - Open http://localhost:8123
+   - Complete initial setup
+   - Configure your component
 
-4. **Restart after code changes**:
-   ```bash
-   docker compose restart homeassistant
-   ```
-
-5. **Stop Home Assistant**:
+4. **Stop Home Assistant**:
    ```bash
    docker compose down
    ```
 
 ### Configuration
 
-{% if include_config_flow %}Your component uses config flow, so add it via the UI:
-1. Go to Settings -> Devices & Services
-2. Click "+ Add Integration"
+{% if include_config_flow %}Add your integration via the UI:
+1. Settings -> Devices & Services
+2. Add Integration
 3. Search for "{{ component_name }}"
-4. Follow the configuration steps
-
-Alternatively, you can configure via YAML in `config/configuration.yaml`:
+{% else %}Add to `config/configuration.yaml` in your test Home Assistant:
 ```yaml
 {{ component_slug }}:
-  # Configuration options
-```
-{% else %}Add to your `config/configuration.yaml`:
-```yaml
-{{ component_slug }}:
-  # Add your configuration here
+  # Your test configuration
 ```
 {% endif %}
 
-Restart Home Assistant after making configuration changes.
+### Live Reloading
 
-### Manual Installation to Existing HA
+For faster development, you can reload your component without restarting Home Assistant:
 
-If you have an existing Home Assistant installation:
+1. Go to Developer Tools -> YAML
+2. Click "Reload" under "YAML Configuration Reloading"
+3. Select "{{ component_name }}"
 
-1. Copy `custom_components/{{ component_slug }}` to your HA config directory:
+Note: This only works for some changes. Structural changes may require a full restart.
+
+### Debugging in Container
+
+1. **Exec into Home Assistant container**:
+   ```bash
+   docker compose exec homeassistant bash
    ```
-   /config/custom_components/{{ component_slug }}/
+
+2. **Check logs**:
+   ```bash
+   tail -f /config/home-assistant.log
    ```
 
-2. Restart Home Assistant
-
-3. Check logs for any errors:
-   ```
-   Settings -> System -> Logs
+3. **Enable debug logging** in `config/configuration.yaml`:
+   ```yaml
+   logger:
+     default: info
+     logs:
+       custom_components.{{ component_slug }}: debug
    ```
 
 ## Code Quality
 
-This project uses several tools to maintain code quality and consistency.
-
 ### Pre-commit Hooks
 
-Pre-commit hooks automatically check your code before each commit.
-
-**What pre-commit checks**:
-- **Ruff**: Linting and formatting
-- **File validation**: Trailing whitespace, end-of-file newlines, YAML/JSON syntax
-- **Codespell**: Common spelling mistakes
-- **Version check**: Warns if `manifest.json` version doesn't match latest git tag
-
-**Install hooks** (if not already done during setup):
-```bash
-pre-commit install
-```
+Pre-commit runs automatically on `git commit` and checks:
+- Python code formatting (ruff)
+- YAML syntax
+- File size and merge conflicts
+- Trailing whitespace
 
 **Run manually** on all files:
 ```bash
 pre-commit run --all-files
 ```
 
-Once installed, pre-commit runs automatically on `git commit`. If issues are found, fix them and commit again.
+**Update hooks**:
+```bash
+pre-commit autoupdate
+```
 
-### Ruff (Linting and Formatting)
+### Linting and Formatting
 
-Check for issues:
+**Check code with ruff**:
 ```bash
 ruff check .
 ```
 
-Auto-fix issues:
+**Auto-fix issues**:
 ```bash
 ruff check --fix .
 ```
 
-Format code:
+**Format code**:
 ```bash
 ruff format .
 ```
 
+### Type Checking
+
+While not configured by default, you can add mypy for type checking:
+
+```bash
+uv pip install mypy
+mypy custom_components/{{ component_slug }}
+```
+
 ## Debugging
 
-### Debug Logging
+### Enable Debug Logging
 
-Enable debug logging for your component in `configuration.yaml`:
+Add to your Home Assistant `configuration.yaml`:
 
 ```yaml
 logger:
-  default: info
+  default: warning
   logs:
     custom_components.{{ component_slug }}: debug
 ```
 
-This will show detailed debug messages in your Home Assistant logs.
+Restart Home Assistant to apply changes.
 
-### Debugging Tests
+### Common Issues
 
-Run with the `-s` flag to see print statements:
-```bash
-pytest -s
-```
+**Component not loading**
+- Check logs: `docker compose logs homeassistant | grep {{ component_slug }}`
+- Verify `manifest.json` is valid JSON
+- Ensure all required dependencies are in `manifest.json`
 
-Or use pytest's built-in debugger:
-```bash
-pytest --pdb  # Drop into debugger on failures
-```
+**Import errors**
+- Check file structure matches manifest.json
+- Verify `__init__.py` exists in component directory
+- Check for Python syntax errors: `python -m py_compile custom_components/{{ component_slug }}/*.py`
 
-## Adding Features
-
-### Adding a Platform (Sensor, Switch, etc.)
-
-The template includes an example sensor platform. To add more platforms:
-
-1. **Create platform file**: `custom_components/{{ component_slug }}/switch.py`
-
-2. **Inherit from base entity class**:
-
-{% if "polling" in integration_type %}```python
-"""Switch platform for {{ component_name }}."""
-from __future__ import annotations
-
-from homeassistant.components.switch import SwitchEntity
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.config_entries import ConfigEntry
-
-from .const import DOMAIN
-from .entity import {{ component_slug.title().replace('_', '') }}Entity
-
-
-async def async_setup_entry(
-    hass: HomeAssistant,
-    entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
-) -> None:
-    """Set up switch platform."""
-    coordinator = hass.data[DOMAIN][entry.entry_id]
-    async_add_entities([{{ component_slug.title().replace('_', '') }}Switch(coordinator)])
-
-
-class {{ component_slug.title().replace('_', '') }}Switch({{ component_slug.title().replace('_', '') }}Entity, SwitchEntity):
-    """{{ component_name }} Switch class."""
-
-    _attr_name = "Power"
-
-    @property
-    def is_on(self) -> bool:
-        """Return true if switch is on."""
-        return self.coordinator.data.get("power_state") == "on"
-
-    async def async_turn_on(self, **kwargs) -> None:
-        """Turn the switch on."""
-        # TODO: Implement turn on logic
-        await self.coordinator.async_request_refresh()
-
-    async def async_turn_off(self, **kwargs) -> None:
-        """Turn the switch off."""
-        # TODO: Implement turn off logic
-        await self.coordinator.async_request_refresh()
-```
-{% else %}```python
-"""Switch platform for {{ component_name }}."""
-from __future__ import annotations
-
-from homeassistant.components.switch import SwitchEntity
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.config_entries import ConfigEntry
-
-from .entity import {{ component_slug.title().replace('_', '') }}Entity
-
-
-async def async_setup_entry(
-    hass: HomeAssistant,
-    entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
-) -> None:
-    """Set up switch platform."""
-    async_add_entities([{{ component_slug.title().replace('_', '') }}Switch()])
-
-
-class {{ component_slug.title().replace('_', '') }}Switch({{ component_slug.title().replace('_', '') }}Entity, SwitchEntity):
-    """{{ component_name }} Switch class."""
-
-    _attr_name = "Power"
-
-    @property
-    def is_on(self) -> bool:
-        """Return true if switch is on."""
-        # TODO: Implement state tracking
-        return False
-
-    async def async_turn_on(self, **kwargs) -> None:
-        """Turn the switch on."""
-        # TODO: Implement turn on logic
-        pass
-
-    async def async_turn_off(self, **kwargs) -> None:
-        """Turn the switch off."""
-        # TODO: Implement turn off logic
-        pass
-```
+{% if include_config_flow %}**Config flow not appearing**
+- Verify `config_flow` is in `manifest.json`
+- Check `config_flow.py` has no syntax errors
+- Look for errors in `home-assistant.log`
 {% endif %}
 
-3. {% if include_config_flow %}Update `PLATFORMS` in `__init__.py`:
+**Entities not showing up**
+- Check platform is listed in PLATFORMS in `__init__.py`
+{% if "polling" in integration_type %}- Verify coordinator is fetching data successfully
+{% endif %}- Check entity has unique_id set
+- Look for errors during platform setup
+
+### Using Python Debugger
+
+Add breakpoints in your code:
+
 ```python
-PLATFORMS = ["sensor", "switch"]  # Add your platforms here
-```
-{% else %}Add to `configuration.yaml`:
-```yaml
-switch:
-  - platform: {{ component_slug }}
-```
-{% endif %}
-
-4. Write tests in `tests/test_switch.py`
-
-### Working with the Coordinator
-
-{% if "polling" in integration_type %}Your component uses a DataUpdateCoordinator for efficient data fetching:
-
-**Customize update interval** in `coordinator.py`:
-```python
-super().__init__(
-    hass,
-    LOGGER,
-    name=DOMAIN,
-    update_interval=timedelta(minutes=5),  # Adjust as needed
-)
+import pdb; pdb.set_trace()
 ```
 
-**Implement data fetching** in `coordinator.py`:
-```python
-async def _async_update_data(self):
-    """Fetch data from API."""
-    try:
-        # TODO: Replace with your API call
-        async with async_timeout.timeout(10):
-            data = await self.api.fetch_data()
-        return data
-    except Exception as exception:
-        raise UpdateFailed(f"Error communicating with API: {exception}") from exception
-```
+When running tests, pytest will drop into debugger at breakpoint.
 
-**Access coordinator data** in entities:
-```python
-@property
-def native_value(self):
-    """Return sensor value."""
-    return self.coordinator.data.get("temperature")
-```
-
-**Manually trigger refresh**:
-```python
-await self.coordinator.async_request_refresh()
-```
-
-{% elif integration_type != "none" %}Your component communicates directly without a coordinator.
-
-**Implement communication** in `api.py`:
-```python
-async def send_command(self, command: str) -> bool:
-    """Send command to device."""
-    # TODO: Implement your communication logic
-    pass
-```
-
-**Update entity state** manually:
-```python
-async def async_turn_on(self, **kwargs):
-    """Turn on the device."""
-    success = await self.api.send_command("power_on")
-    if success:
-        self._attr_is_on = True
-        self.async_write_ha_state()
-```
-
-{% endif %}
-
-### Adding a Service
-
-1. Define service in `services.yaml`:
-```yaml
-my_service:
-  name: My Service
-  description: Does something useful
-  fields:
-    entity_id:
-      description: Entity to control
-      example: "sensor.example"
-```
-
-2. Register service in `__init__.py`:
-```python
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Set up from a config entry."""
-
-    async def handle_my_service(call):
-        """Handle the service call."""
-        entity_id = call.data.get("entity_id")
-        # Service logic here
-
-    hass.services.async_register("{{ component_slug }}", "my_service", handle_my_service)
-    return True
-```
+For debugging in Home Assistant container:
+1. Attach to container: `docker attach $(docker compose ps -q homeassistant)`
+2. Code will pause at breakpoint
+3. Use standard pdb commands (n, s, c, p variable_name)
 
 ## Release Process
 
@@ -608,17 +632,23 @@ Follow [Semantic Versioning](https://semver.org/):
    }
    ```
 
-2. **Tag release**:
+2. **Commit changes**:
+   ```bash
+   git add manifest.json
+   git commit -m "chore: bump version to X.Y.Z"
+   ```
+
+3. **Tag release**:
    ```bash
    git tag -a vX.Y.Z -m "Release version X.Y.Z"
    ```
 
-3. **Push to {{ vcs_name }}**:
+4. **Push to {{ vcs_name }}**:
    ```bash
    git push origin main --tags
    ```
 
-4. **Create release** on {{ vcs_name }}:
+5. **Create release** on {{ vcs_name }}:
    - Go to your repository
    - Create a new release from your tag
    - Add release notes

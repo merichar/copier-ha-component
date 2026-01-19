@@ -1,0 +1,47 @@
+# Custom services for {{ component_name }}
+# Define custom actions that users can call from automations and scripts
+
+# Example service: Refresh data manually
+refresh:
+  name: Refresh data
+  description: Manually refresh data from the device/service
+  fields:
+    device_id:
+      name: Device
+      description: Device to refresh (optional, refreshes all if not specified)
+      required: false
+      example: "abc123"
+      selector:
+        device:
+          integration: {{ component_slug }}
+
+# Example service: Send custom command
+send_command:
+  name: Send command
+  description: Send a custom command to the device
+  fields:
+    device_id:
+      name: Device
+      description: Target device
+      required: true
+      selector:
+        device:
+          integration: {{ component_slug }}
+    command:
+      name: Command
+      description: Command to send
+      required: true
+      example: "calibrate"
+      selector:
+        text:
+    parameters:
+      name: Parameters
+      description: Optional command parameters (JSON)
+      required: false
+      example: '{"timeout": 30}'
+      selector:
+        object:
+
+# TODO: Customize these services or add your own
+# TODO: Implement the service handlers in __init__.py using:
+#       hass.services.async_register(DOMAIN, "service_name", handler_function)

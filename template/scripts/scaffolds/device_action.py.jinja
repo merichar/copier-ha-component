@@ -1,0 +1,94 @@
+"""Device actions for {{ component_name }}."""
+
+from __future__ import annotations
+
+from typing import Any
+
+import voluptuous as vol
+
+from homeassistant.components.device_automation import DEVICE_ACTION_BASE_SCHEMA
+from homeassistant.const import CONF_DEVICE_ID, CONF_DOMAIN, CONF_TYPE
+from homeassistant.core import Context, HomeAssistant
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers.typing import ConfigType
+
+from .const import DOMAIN
+
+# TODO: Define action types for your device
+# Examples: "flash_light", "play_sound", "send_notification"
+ACTION_TYPES = {"flash_light", "play_sound"}
+
+ACTION_SCHEMA = DEVICE_ACTION_BASE_SCHEMA.extend(
+    {
+        vol.Required(CONF_TYPE): vol.In(ACTION_TYPES),
+    }
+)
+
+
+async def async_get_actions(
+    hass: HomeAssistant, device_id: str
+) -> list[dict[str, Any]]:
+    """List device actions for {{ component_name }} devices."""
+    # TODO: Customize action list based on device capabilities
+    
+    actions = []
+    
+    # Add all defined action types
+    for action_type in ACTION_TYPES:
+        actions.append(
+            {
+                CONF_TYPE: action_type,
+                CONF_DEVICE_ID: device_id,
+                CONF_DOMAIN: DOMAIN,
+            }
+        )
+    
+    return actions
+
+
+async def async_call_action_from_config(
+    hass: HomeAssistant,
+    config: ConfigType,
+    variables: dict[str, Any],
+    context: Context | None,
+) -> None:
+    """Execute a device action."""
+    # TODO: Implement action execution logic
+    
+    action_type = config[CONF_TYPE]
+    device_id = config[CONF_DEVICE_ID]
+    
+    # Get the coordinator for this device
+    # This assumes you have a way to map device_id to config entry
+    # You may need to adjust based on your integration structure
+    
+    if action_type == "flash_light":
+        # TODO: Implement flash light action
+        # Example: await coordinator.api.flash_light(device_id)
+        pass
+    elif action_type == "play_sound":
+        # TODO: Implement play sound action
+        # Example: await coordinator.api.play_sound(device_id)
+        pass
+
+
+async def async_get_action_capabilities(
+    hass: HomeAssistant, config: ConfigType
+) -> dict[str, vol.Schema]:
+    """List action capabilities."""
+    # TODO: Add any additional fields for action configuration
+    # Example: Allow users to specify duration, volume, etc.
+    
+    action_type = config[CONF_TYPE]
+    
+    if action_type == "flash_light":
+        return {
+            "extra_fields": vol.Schema(
+                {
+                    vol.Optional("duration", default=3): cv.positive_int,
+                }
+            )
+        }
+    
+    # Return empty schema if no additional configuration needed
+    return {}

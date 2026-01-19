@@ -1,0 +1,53 @@
+"""Base entity for {{ component_name }}."""
+
+from __future__ import annotations
+
+from homeassistant.helpers.entity import DeviceInfo
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
+
+from .const import DOMAIN
+from .coordinator import {{ component_slug|replace('_', ' ')|title|replace(' ', '') }}DataUpdateCoordinator
+
+
+class {{ component_slug|replace('_', ' ')|title|replace(' ', '') }}Entity(
+    CoordinatorEntity[{{ component_slug|replace('_', ' ')|title|replace(' ', '') }}DataUpdateCoordinator]
+):
+    """Base entity for {{ component_name }}."""
+
+    def __init__(
+        self,
+        coordinator: {{ component_slug|replace('_', ' ')|title|replace(' ', '') }}DataUpdateCoordinator,
+        entity_type: str,
+    ) -> None:
+        """Initialize the entity."""
+        super().__init__(coordinator)
+        self._entity_type = entity_type
+        
+        # TODO: Extract device information from coordinator.data
+        self._device_id = "device_123"  # Replace with actual device ID
+        self._device_name = "{{ component_name }}"  # Replace with actual device name
+        self._model = "Model X"  # Replace with actual model
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        """Return device information."""
+        return DeviceInfo(
+            identifiers={(DOMAIN, self._device_id)},
+            name=self._device_name,
+            manufacturer="{{ component_name.split()[0] if ' ' in component_name else 'Custom' }}",
+            model=self._model,
+            # TODO: Add more device info as needed:
+            # sw_version="1.0.0",
+            # hw_version="2.0",
+            # configuration_url="http://example.com",
+        )
+
+    @property
+    def unique_id(self) -> str:
+        """Return unique ID for this entity."""
+        return f"{self._device_id}_{self._entity_type}"
+
+    @property
+    def available(self) -> bool:
+        """Return if entity is available."""
+        return self.coordinator.last_update_success

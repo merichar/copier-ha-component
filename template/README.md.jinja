@@ -4,9 +4,20 @@ Home Assistant custom component for {{ component_name }}.
 
 ## Installation
 
-Choose **ONE** of the following methods:
+Choose one of the following:
 
-### Option A: HACS Custom Repository
+### Option A: HACS Default Repository
+
+Once this component is accepted into the HACS default repository, you can install it directly:
+
+1. Ensure [HACS](https://hacs.xyz/) is installed
+2. In Home Assistant, go to HACS -> Integrations
+3. Click "+ Explore & Download Repositories"
+4. Search for "{{ component_name }}"
+5. Click "Download"
+6. Restart Home Assistant
+
+### Option B: HACS Custom Repository
 
 Use this method for any component, whether or not it's in the HACS default repository.
 
@@ -19,17 +30,6 @@ Use this method for any component, whether or not it's in the HACS default repos
 7. Click "{{ component_name }}" in the list
 8. Click "Download"
 9. Restart Home Assistant
-
-### Option B: HACS Default Repository
-
-Once this component is accepted into the HACS default repository, you can install it directly:
-
-1. Ensure [HACS](https://hacs.xyz/) is installed
-2. In Home Assistant, go to HACS -> Integrations
-3. Click "+ Explore & Download Repositories"
-4. Search for "{{ component_name }}"
-5. Click "Download"
-6. Restart Home Assistant
 
 ### Option C: Manual Installation
 
@@ -45,26 +45,17 @@ Once this component is accepted into the HACS default repository, you can instal
 ## Configuration
 
 {% if include_config_flow %}
-### UI Configuration (Recommended)
+### UI Configuration
 
 1. Go to Settings -> Devices & Services
 2. Click "+ Add Integration"
 3. Search for "{{ component_name }}"
 4. Follow the configuration steps
 
+{% else %}
 ### YAML Configuration
 
-Alternatively, add to your `configuration.yaml`:
-
-```yaml
-{{ component_slug }}:
-  # Configuration options will be documented here
-```
-
-Restart Home Assistant after making changes.
-{% else %}
 Add the following to your `configuration.yaml`:
-
 ```yaml
 {{ component_slug }}:
   # Add your configuration here
