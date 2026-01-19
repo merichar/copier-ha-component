@@ -19,7 +19,7 @@ Choose one of three:
 
 ### Option A: Devcontainer in VS Code (Recommended)
 
-Everything installs automatically (HA dev environment, Python 3.12, dependencies, pre-commit).
+Everything installs automatically (HA dev environment, Python 3.12, dependencies, prek).
 
 1. Install [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
 2. Open this project in VS Code
@@ -49,9 +49,9 @@ Use a containerized development environment without VS Code integration.
 
    *Note: pip users can substitute `uv pip` with `pip` in all commands.*
 
-4. **Install pre-commit hooks** (inside container):
+4. **Install prek (pre-commit) hooks** (inside container):
    ```bash
-   pre-commit install
+   prek install
    ```
 
 5. **Run tests** (inside container):
@@ -102,9 +102,9 @@ Work directly on your host machine without containers.
    uv pip install -e .[dev]
    ```
 
-4. **Install pre-commit hooks** (recommended):
+4. **Install prek (pre-commit) hooks** (recommended):
    ```bash
-   pre-commit install
+   prek install
    ```
 
 ## Project Structure
@@ -116,7 +116,7 @@ Work directly on your host machine without containers.
 │   └── docker-compose.yml       # Development container setup
 ├── .editorconfig                # Editor-agnostic formatting rules
 ├── .gitignore
-├── .pre-commit-config.yaml      # Pre-commit hooks configuration
+├── .pre-commit-config.yaml      # prek (pre-commit) hooks configuration
 ├── custom_components/
 │   └── {{ component_slug }}/
 │       ├── __init__.py          # Component setup and entry points
@@ -516,9 +516,9 @@ Note: This only works for some changes. Structural changes may require a full re
 
 ## Code Quality
 
-### Pre-commit Hooks
+### prek (Pre-commit) Hooks
 
-Pre-commit runs automatically on `git commit` and checks:
+*prek* runs automatically on `git commit` and checks:
 - Python code formatting (ruff)
 - YAML syntax
 - File size and merge conflicts
@@ -526,12 +526,12 @@ Pre-commit runs automatically on `git commit` and checks:
 
 **Run manually** on all files:
 ```bash
-pre-commit run --all-files
+prek run --all-files
 ```
 
 **Update hooks**:
 ```bash
-pre-commit autoupdate
+prek auto-update
 ```
 
 ### Linting and Formatting
@@ -687,7 +687,7 @@ Users can install the component via HACS or manually. See the [README.md](README
 - [pytest Documentation](https://docs.pytest.org/)
 - [pytest-homeassistant-custom-component](https://github.com/MatthewFlamm/pytest-homeassistant-custom-component)
 - [uv Documentation](https://docs.astral.sh/uv/)
-- [Pre-commit Documentation](https://pre-commit.com/)
+- [prek Documentation](https://prek.j178.dev/)
 
 ## Getting Help
 

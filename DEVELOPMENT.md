@@ -27,12 +27,12 @@ Guide for working on the copier-ha-component template itself.
    # or with pipx: pipx install copier
    ```
 
-4. **Install pre-commit** (recommended):
+4. **Install prek** (recommended):
    ```bash
-   uv tool install pre-commit
-   # or with pipx: pipx install pre-commit
+   uv tool install prek
+   # or with pipx: pipx install prek
 
-   pre-commit install
+   prek install
    ```
 
    This ensures your template changes are validated before committing.
@@ -41,7 +41,7 @@ Guide for working on the copier-ha-component template itself.
 
 ```
 copier-ha-component/
-├── .pre-commit-config.yaml         # Pre-commit hooks for template repo
+├── .pre-commit-config.yaml         # prek (pre-commit) hooks for template repo
 ├── copier.yml                      # Template configuration and questions
 ├── DEVELOPMENT.md                  # This file
 ├── LICENSE                         # MIT license for template
@@ -185,22 +185,22 @@ copier copy --trust --defaults --vcs-ref HEAD \
    grep -r "{{" . && echo "ERROR: Found untemplated variables!" || echo "OK"
    ```
 
-### Running Pre-commit
+### Running prek
 
 **Automatically on commit** (if installed):
 ```bash
 git commit -m "feat: add new feature"
-# Pre-commit runs automatically
+# prek runs automatically
 ```
 
 **Manually on all files**:
 ```bash
-pre-commit run --all-files
+prek run --all-files
 ```
 
 **Update hook versions**:
 ```bash
-pre-commit autoupdate
+prek auto-update
 ```
 
 **Skip hooks** (not recommended):
@@ -259,7 +259,7 @@ git commit --no-verify
 1. Edit files in `template/`
 2. Test generation with `copier copy --trust . ../test-output`
 3. Verify output in generated project
-4. Run pre-commit checks: `pre-commit run --all-files`
+4. Run pre-commit checks: `prek run --all-files`
 
 ## Common Template Patterns
 
@@ -311,7 +311,7 @@ async def async_setup(...):
 
 ## Contributing Guidelines
 
-1. **Run pre-commit**: `pre-commit run --all-files`
+1. **Run pre-commit**: `prek run --all-files`
 2. **Use semantic commits**:
    - `feat: add new template feature`
    - `fix: correct Jinja syntax in manifest`
@@ -343,7 +343,7 @@ The script will:
 
 1. **Run full validation**:
    ```bash
-   pre-commit run --all-files
+   prek run --all-files
    # Fix any issues
    ```
 
@@ -380,7 +380,7 @@ The script will:
 ### Tools
 
 - [uv Documentation](https://docs.astral.sh/uv/)
-- [Pre-commit Documentation](https://pre-commit.com/)
+- [prek Documentation](https://prek.j178.dev/)
 - [Ruff Documentation](https://docs.astral.sh/ruff/)
 
 ## Getting Help

@@ -215,7 +215,7 @@ _tasks:
   - "git init -b main"
   - "git add ."
   - 'git commit -m "feat: initial component from copier-ha-component template"'
-  - "pre-commit install || echo 'Note: Run pre-commit install after installing dev dependencies'"
+  - "prek install || echo 'Note: Run prek install after installing dev dependencies'"
 
 # Post-generation message
 _message_after_copy: |
